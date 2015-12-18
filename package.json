@@ -1,0 +1,29 @@
+{
+  "name": "neodm",
+  "version": "1.0.0",
+  "description": "Neo4j Graph Data Model",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/catalint/neograph.git"
+  },
+  "keywords": [
+    "neo4j",
+    "orm",
+    "odm",
+    "graph",
+    "model",
+    "data",
+    "mapper",
+    "db"
+  ],
+  "author": "Catalin Tanasescu <catalint@gmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/catalint/neodm/issues"
+  },
+  "homepage": "https://github.com/catalint/neodm#readme"
+}
