@@ -1,5 +1,6 @@
 "use strict"
-
 module.exports = {
-    Node: require('./Node')
+    definition: require('./constants').definition,
+    Node: require('./Node'),
+    register: require('./Registrar').register
 }
