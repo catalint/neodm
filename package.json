@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/catalint/neograph.git"
+    "url": "git+https://github.com/catalint/neodm.git"
   },
   "keywords": [
     "neo4j",
@@ -25,5 +25,10 @@
   "bugs": {
     "url": "https://github.com/catalint/neodm/issues"
   },
-  "homepage": "https://github.com/catalint/neodm#readme"
+  "homepage": "https://github.com/catalint/neodm#readme",
+  "dependencies": {
+    "co": "^4.6.0",
+    "joi": "^7.2.2",
+    "neo4j": "^2.0.0-RC2"
+  }
 }

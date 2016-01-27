@@ -1,5 +1,7 @@
 module.exports = {
-    definition: Symbol.for('definition'),
-    ownProperties: Symbol.for('ownProperties'),
-    inheritedProperties: Symbol.for('inheritedProperties')
+    getSchemaKey: Symbol('getSchema'),
+    nodeKey     : Symbol('nodeData'),
+    newDataKey     : Symbol('newDataKey'),
+    schemaKey   : Symbol('schemaData'),
+    mainNode    : '$main'
 }
