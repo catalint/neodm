@@ -1,23 +1,25 @@
 "use strict"
-const co = require('co')
-const neo4j = require('neo4j')
-const ModelHelper = require('./ModelHelper')
-const getSchemaKey = require('./constants').getSchemaKey
-const schemaKey = require('./constants').getSchemaKey
-const nodeKey = require('./constants').nodeKey
-const newDataKey = require('./constants').newDataKey
-const Relationship = require('./Relationship').Relationship
+const co                  = require('co')
+const Joi                 = require('joi')
+const neo4j               = require('neo4j')
+const ModelHelper         = require('./ModelHelper')
+const getSchemaKey        = require('./constants').getSchemaKey
+const schemaKey           = require('./constants').getSchemaKey
+const nodeKey             = require('./constants').nodeKey
+const newDataKey          = require('./constants').newDataKey
+const Relationship        = require('./Relationship').Relationship
 const HasManyRelationship = require('./Relationship').HasManyRelationship
-const HasOneRelationship = require('./Relationship').HasOneRelationship
+const HasOneRelationship  = require('./Relationship').HasOneRelationship
 
 const relationshipsKey = Symbol('addRelationships')
+const schemaValidation = Symbol('schemaValidation')
 
 class Model {
     constructor(node) {
         this[relationshipsKey] = []
-        this[newDataKey] = {}
-        const schema = this[getSchemaKey]()
-        const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
+        this[newDataKey]       = {}
+        const schema           = this.getSchema()
+        const propertyKeys     = Object.getOwnPropertyNames(schema).filter(key=> {
             return !(schema[key] instanceof Relationship)
         })
         const relationshipKeys = Object.getOwnPropertyNames(schema).filter(key=> {
@@ -40,33 +42,87 @@ class Model {
                     }
                     if (!this.id || this[nodeKey].properties[key] !== this[newDataKey][key]) {
                         this[nodeKey].properties[key] = value
-                        this[newDataKey][key] = value
+                        this[newDataKey][key]         = value
                     }
                 }
             })
         })
 
         relationshipKeys.forEach(key=> {
-            Object.defineProperty(this, key, {
-                configurable: false,
-                enumerable  : true,
-                get(){
-                    if (schema[key] instanceof HasManyRelationship) {
-                        return Object.freeze(this[nodeKey].relationships[key] || [])
-                    } else {
-                        return this[nodeKey].relationships[key]
+            if (schema[key] instanceof HasManyRelationship) {
+                Object.defineProperty(this, key, {
+                    configurable: false,
+                    enumerable  : true,
+                    get(){
+                        return Object.freeze(this[nodeKey].relationships[key])
+                    },
+                    set(value){
+                        throw new Error(`Use ${this.getModelName()}Object.[addRelationship|setRelationship|deleteRelationship]('${key}',model|id) `)
                     }
-                },
-                set(){
-                    throw new Error("Use [addRelationship|setRelationship|deleteRelationship](key,model) ")
-                }
-            })
+                })
+            } else if (schema[key] instanceof HasOneRelationship) {
+                Object.defineProperty(this, key, {
+                    configurable: false,
+                    enumerable  : true,
+                    get(){
+                        return this[nodeKey].relationships[key]
+                    },
+                    set(value){
+                        if (value === undefined) {
+                            value = null
+                        }
+                        if (value === null) {
+                            return this.deleteRelationship(key)
+                        } else {
+                            return this.setRelationship(key, value)
+                        }
+                    }
+                })
+            }
+
         })
     }
 
+    static validator() {
+        if (this[schemaValidation] !== undefined) {
+            return this[schemaValidation]
+        }
+        const schema  = this[Model.schema]()
+        const ownRefs = []
+        Object.getOwnPropertyNames(schema).forEach(propName=> {
+            if (schema[propName].to === this) {
+                ownRefs.push(propName)
+                delete schema[propName]
+            }
+            else if (schema[propName] instanceof Model.hasOne().constructor) {
+                schema[propName] = schema[propName].to.validator()
+            }
+            else if (schema[propName] instanceof Model.hasMany().constructor) {
+                schema[propName] = Joi.array().items(schema[propName].to.validator())
+            }
+        })
+        let joiSchema = Joi.object(schema)
+        if (ownRefs.length) {
+            const refKeys = {}
+            for (let propName of ownRefs) {
+                refKeys[propName] = joiSchema
+            }
+            joiSchema = joiSchema.keys(refKeys)
+        }
+        this[schemaValidation] = joiSchema.label(this.getModelName())
+        return this[schemaValidation]
+    }
+
     setRelationship(key, model) {
-        const schema = this[getSchemaKey]()
-        const rel = schema[key]
+        const schema = this.getSchema()
+        const rel    = schema[key]
+        if (!(rel instanceof Relationship)) {
+            throw new Error(`Expected a relationship for ${key}`)
+        }
+        if (!(model instanceof Model) || isNaN(Number(model))) {
+            throw new Error(`Expected instance of Model or id`)
+        }
+
         this[relationshipsKey].push({action: 'delete', rel: rel})
 
         if (rel instanceof HasOneRelationship) {
@@ -87,8 +143,15 @@ class Model {
     }
 
     addRelationship(key, model) {
-        const schema = this[getSchemaKey]()
-        const rel = schema[key]
+        const schema = this.getSchema()
+        const rel    = schema[key]
+        if (!(rel instanceof Relationship)) {
+            throw new Error(`Expected a relationship for ${key}`)
+        }
+        if (!(model instanceof Model) && isNaN(Number(model))) {
+            throw new Error(`Expected instance of Model or id`)
+        }
+
         if (rel instanceof HasOneRelationship) {
             this.setRelationship(key, model)
         } else if (rel instanceof HasManyRelationship) {
@@ -108,9 +171,18 @@ class Model {
     }
 
     deleteRelationship(key, model) {
-        const schema = this[getSchemaKey]()
-        const rel = schema[key]
-        let id = undefined
+        if (!(rel instanceof Relationship)) {
+            throw new Error(`Expected a relationship for ${key}`)
+        }
+
+        if (model !== undefined && (!(model instanceof Model) || isNaN(Number(model)))) {
+            throw new Error(`Expected instance of Model or id`)
+        }
+
+
+        const schema = this.getSchema()
+        const rel    = schema[key]
+        let id       = undefined
         if (model !== undefined) {
             if (model instanceof Model) {
                 id = model.id
@@ -139,14 +211,27 @@ class Model {
     }
 
     _setNewNodeData(node) {
+        this[newDataKey] = {}
+        if (node instanceof neo4j.Node) {
+            // all good
+        } else if (typeof node === "object") {
+            node = {
+                _id       : undefined,
+                properties: node
+            }
+        } else {
+            node = {
+                _id       : undefined,
+                properties: {}
+            }
+        }
+
+        node.relationships = {}
+
         Object.defineProperty(this, nodeKey, {
             configurable: true,
             enumerable  : false,
-            value       : node || {
-                _id          : undefined,
-                properties   : {},
-                relationships: {}
-            },
+            value       : node,
             writable    : false
         })
 
@@ -164,9 +249,9 @@ class Model {
             return Promise.resolve(node)
         }
         return co(function*() {
-                let id = node.id
-                const schema = node[getSchemaKey]()
-                const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
+                let id                 = node.id
+                const schema           = node.getSchema()
+                const propertyKeys     = Object.getOwnPropertyNames(schema).filter(key=> {
                     return !(schema[key] instanceof Relationship)
                 })
                 const relationshipKeys = Object.getOwnPropertyNames(schema).filter(key=> {
@@ -182,9 +267,15 @@ class Model {
                 })
                 let cypherNode = {}
                 if (id === undefined) {
-                    cypherNode = {
-                        query : `CREATE (node:${node.getModelName()} {props}) return node`,
-                        params: {props: setProperties}
+                    if (Object.getOwnPropertyNames(setProperties).length) {
+                        cypherNode = {
+                            query : `CREATE (node:${node.getModelName()} {props}) return node`,
+                            params: {props: setProperties}
+                        }
+                    } else {
+                        cypherNode = {
+                            query: `CREATE (node:${node.getModelName()}) return node`,
+                        }
                     }
                 } else {
                     cypherNode = {
@@ -193,7 +284,12 @@ class Model {
                     }
                 }
                 if (Object.getOwnPropertyNames(setProperties).length > 0 || id === undefined) {
-                    const dbNode = yield ModelHelper.runQuery(cypherNode, node.getModel())
+                    const dbNode = yield ModelHelper.runQuery({
+                        query : cypherNode.query,
+                        params: cypherNode.params,
+                        schema: {node: node.getModel()},
+                        single: true
+                    })
                     if (id === undefined) {
                         id = dbNode.id
                         node._setNewNodeData(dbNode[nodeKey])
@@ -263,6 +359,7 @@ class Model {
                 for (let cypher of relationshipCyphers) {
                     yield ModelHelper.runRaw(cypher)
                 }
+                node[relationshipsKey] = []
 
                 return node
             }
@@ -271,8 +368,8 @@ class Model {
 
 
     getRelationships(relationshipKeys) {
-        const schema = this[getSchemaKey]()
-        const from = this
+        const schema       = this.getSchema()
+        const from         = this
         const returnObject = Array.isArray(relationshipKeys) || relationshipKeys === undefined
 
         return co(function*() {
@@ -296,7 +393,7 @@ class Model {
                 rel.key = key
                 return rel
             })
-            const relationships = yield ModelHelper.findRelationships(from, relationshipObjects)
+            const relationships       = yield ModelHelper.findRelationships(from, relationshipObjects)
 
             if (returnObject) {
                 return relationships
@@ -322,11 +419,11 @@ class Model {
         })
     }
 
-    [getSchemaKey]() {
+    getSchema() {
         return this.getModel()[schemaKey]()
     }
 
-    static [getSchemaKey]() {
+    static getSchema() {
         return this.getModel()[schemaKey]()
     }
 
@@ -364,13 +461,32 @@ class Model {
         return new HasManyRelationship(to, options.name)
     }
 
-    static findAll() {
-        return ModelHelper.find(`MATCH (node:${this.getModelName()}) RETURN DISTINCT node`, {node: this})
-    }
-
-    static find(query, options) {
-        if (!isNaN(Number(query))) {
-            return ModelHelper.findById(this, Number(query), options)
+    static find(query) {
+        if (query === undefined) {
+            return this.find({
+                query     : `MATCH (node:${this.getModelName()}) RETURN node`,
+                identifier: 'node',
+                list      : true
+            })
+        }
+        else if (!isNaN(Number(query))) {
+            return this.find({
+                query     : `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
+                params    : {id: Number(query)},
+                identifier: 'node',
+                single    : true
+            })
+        }
+        else if (typeof query === "string") {
+            return this.find({query: query, identifier: '$main', singleList: true})
+        }
+        else {
+            const queryOptions = {query: query.query, params: query.params, single: query.single, list: query.list}
+            if (query.identifier) {
+                queryOptions.single = true
+                queryOptions.schema = {[query.identifier]: this}
+            }
+            return ModelHelper.runQuery(queryOptions)
         }
     }
 }

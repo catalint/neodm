@@ -2,7 +2,8 @@
 
 class Relationship {
     constructor(to, relName) {
-        this.to = to
+        to           = to || {}
+        this.to      = to
         this.relName = relName || to.name
     }
 }

@@ -1,10 +1,10 @@
 "use strict"
-const HasOneRelationship = require('./Relationship').HasOneRelationship
+const HasOneRelationship  = require('./Relationship').HasOneRelationship
 const HasManyRelationship = require('./Relationship').HasManyRelationship
-const neo4j = require('neo4j')
-const co = require('co')
-const db = require('./db')
-const mainNode = require('./constants').mainNode
+const neo4j               = require('neo4j')
+const co                  = require('co')
+const db                  = require('./db')
+const mainNode            = require('./constants').mainNode
 
 
 class ModelHelper {
@@ -14,34 +14,41 @@ class ModelHelper {
         })
     }
 
-    static runQuery(query, model, nodeName) {
+    static runQuery(options) {
         return co(function*() {
-            const results = yield db.query(query);
-            if (results[0] !== undefined) {
-                return new model(results[0][nodeName || 'node'])
-            } else {
-                return undefined
+            const schemaKeys = Object.getOwnPropertyNames(options.schema)
+            let nodeName
+            if (options.single) {
+                nodeName = schemaKeys[0] || 'node'
             }
-        })
-    }
-
-    static findById(model, id, options) {
-        return co(function*() {
-            const results = yield db.query({
-                query : `MATCH (node:${model.getModelName()}) WHERE id(node) = {id} RETURN node`,
-                params: {id: id}
-            });
-            if (results[0] !== undefined) {
-                return new model(results[0]['node'])
+            let results = yield db.query({query: options.query, params: options.params})
+            results     = results.map(res=> {
+                schemaKeys.forEach(key=> {
+                    res[key] = new (options.schema[key])(res[key])
+                })
+                return res
+            })
+            if (options.list) {
+                if (options.single) {
+                    return results.map(res=>res[nodeName])
+                } else {
+                    return results
+                }
+            } else if (options.single) {
+                if (results[0] !== undefined) {
+                    return results[0][nodeName]
+                } else {
+                    return undefined
+                }
             } else {
-                return undefined
+                throw new Error('single or list?')
             }
         })
     }
 
     static findRelationships(from, rels, options) {
         return co(function*() {
-            const cypherReturns = []
+            const cypherReturns   = []
             const optionalMatches = rels.map((rel) => {
                 if (rel instanceof HasOneRelationship) {
                     cypherReturns.push(rel.key)
@@ -52,11 +59,11 @@ class ModelHelper {
                 }
                 return `OPTIONAL MATCH (${mainNode})-[:${rel.relName}]->(${rel.key}:${rel.to.getModelName()})`
             })
-            const cypherQuery = {
+            const cypherQuery     = {
                 query : `MATCH (${mainNode}:${from.getModelName()}) WHERE id(${mainNode}) = {id} ${optionalMatches.join("\n")} RETURN ${cypherReturns.join(', ')}`,
                 params: {id: from.id}
             }
-            const results = yield db.query(cypherQuery);
+            const results         = yield db.query(cypherQuery);
             if (!Array.isArray(results)) {
                 return undefined
             }
@@ -86,7 +93,7 @@ class ModelHelper {
             const results = yield dbQuery({
                 query: query
             });
-            return results.map(function(result) {
+            return results.map(function (result) {
                 for (let key in result) {
                     if (result[key] instanceof neo4j.Node) {
                         let model = Model
