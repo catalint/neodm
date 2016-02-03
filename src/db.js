@@ -5,13 +5,14 @@ let logger;
 
 function query(query) {
     if (logger !== undefined) {
-        logger({query})
+        logger(query)
     }
     if (db === undefined) {
         throw new Error("db not initialized")
     }
     return new Promise((resolve, reject)=> {
         db.cypher(query, (err, result) => {
+                logger(result)
                 err ? reject(err) : resolve(result)
             }
         )
