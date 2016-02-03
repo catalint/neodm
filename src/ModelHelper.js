@@ -14,6 +14,14 @@ class ModelHelper {
         })
     }
 
+    static getID(model) {
+        if (!isNaN(Number(model))) {
+            return Number(model)
+        } else if (typeof model === "object") {
+            return ModelHelper.getID(model.id)
+        }
+    }
+
     static runQuery(options) {
         return co(function*() {
             const schemaKeys = Object.getOwnPropertyNames(options.schema)
@@ -73,11 +81,14 @@ class ModelHelper {
             else if (results[0] !== undefined) {
                 const result = {}
                 rels.forEach((rel)=> {
-                    if (rel instanceof HasOneRelationship) {
-                        result[rel.key] = new rel.to(results[0][rel.key])
+                    if (results[0][rel.key] !== null) {
+                        if (rel instanceof HasOneRelationship) {
+                            result[rel.key] = new rel.to(results[0][rel.key])
 
-                    } else if (rel instanceof HasManyRelationship) {
-                        result[rel.key] = results[0][rel.key].map(r=>new rel.to(r))
+                        } else if (rel instanceof HasManyRelationship) {
+                            result[rel.key] = results[0][rel.key].map(r=>new rel.to(r))
+                        }
+
                     }
                 })
                 return result
