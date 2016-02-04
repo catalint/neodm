@@ -1,6 +1,6 @@
 {
   "name": "neodm",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/catalint/neodm#readme",
   "dependencies": {
     "co": "^4.6.0",
+    "hoek": "^3.0.4",
     "joi": "^7.2.3",
     "neo4j": "^2.0.0-RC2"
   }

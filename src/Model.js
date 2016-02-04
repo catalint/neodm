@@ -1,15 +1,15 @@
 "use strict"
-const co                  = require('co')
-const Joi                 = require('joi')
-const neo4j               = require('neo4j')
-const ModelHelper         = require('./ModelHelper')
-const getSchemaKey        = require('./constants').getSchemaKey
-const schemaKey           = require('./constants').getSchemaKey
-const nodeKey             = require('./constants').nodeKey
-const newDataKey          = require('./constants').newDataKey
-const Relationship        = require('./Relationship').Relationship
+const co = require('co')
+const Joi = require('joi')
+const neo4j = require('neo4j')
+const Hoek = require('hoek')
+const ModelHelper = require('./ModelHelper')
+const schemaKey = require('./constants').getSchemaKey
+const nodeKey = require('./constants').nodeKey
+const newDataKey = require('./constants').newDataKey
+const Relationship = require('./Relationship').Relationship
 const HasManyRelationship = require('./Relationship').HasManyRelationship
-const HasOneRelationship  = require('./Relationship').HasOneRelationship
+const HasOneRelationship = require('./Relationship').HasOneRelationship
 
 const relationshipsKey = Symbol('addRelationships')
 const schemaValidation = Symbol('schemaValidation')
@@ -17,9 +17,9 @@ const schemaValidation = Symbol('schemaValidation')
 class Model {
     constructor(node) {
         this[relationshipsKey] = []
-        this[newDataKey]       = {}
-        const schema           = this.getSchema()
-        const propertyKeys     = Object.getOwnPropertyNames(schema).filter(key=> {
+        this[newDataKey] = {}
+        const schema = this.getSchema()
+        const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
             return !(schema[key] instanceof Relationship)
         })
         const relationshipKeys = Object.getOwnPropertyNames(schema).filter(key=> {
@@ -40,9 +40,9 @@ class Model {
                     if (value === undefined) {
                         value = null
                     }
-                    if (JSON.stringify(value) !== JSON.stringify(this[nodeKey].properties[key])) {
+                    if (!Hoek.deepEqual(value, this[nodeKey].properties[key], {prototype: false})) {
                         this[nodeKey].properties[key] = value
-                        this[newDataKey][key]         = value
+                        this[newDataKey][key] = value
                     }
                 }
             })
@@ -89,8 +89,8 @@ class Model {
     }
 
     inflateData(data) {
-        const schema           = this.getSchema()
-        const propertyKeys     = Object.getOwnPropertyNames(schema).filter(key=> {
+        const schema = this.getSchema()
+        const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
             return !(schema[key] instanceof Relationship)
         })
         const relationshipKeys = Object.getOwnPropertyNames(schema).filter(key=> {
@@ -118,7 +118,7 @@ class Model {
         if (this[schemaValidation] !== undefined) {
             return this[schemaValidation]
         }
-        const schema  = this[Model.schema]()
+        const schema = this.getSchema()
         const ownRefs = []
         Object.getOwnPropertyNames(schema).forEach(propName=> {
             if (schema[propName].to === this) {
@@ -146,7 +146,7 @@ class Model {
 
     setRelationship(key, model) {
         const schema = this.getSchema()
-        const rel    = schema[key]
+        const rel = schema[key]
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`)
         }
@@ -156,7 +156,7 @@ class Model {
 
         if (rel instanceof HasOneRelationship) {
             let currentId = ModelHelper.getID(this[nodeKey].relationships[key])
-            let nextId    = ModelHelper.getID(model)
+            let nextId = ModelHelper.getID(model)
             if (currentId !== nextId || nextId === undefined) {
                 this[relationshipsKey].push({action: 'delete', rel: rel})
                 this[relationshipsKey].push({action: 'add', rel: rel, to: model})
@@ -179,7 +179,7 @@ class Model {
 
     addRelationship(key, model) {
         const schema = this.getSchema()
-        const rel    = schema[key]
+        const rel = schema[key]
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`)
         }
@@ -207,7 +207,7 @@ class Model {
 
     deleteRelationship(key, model) {
         const schema = this.getSchema()
-        const rel    = schema[key]
+        const rel = schema[key]
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`)
         }
@@ -246,7 +246,7 @@ class Model {
     }
 
     _setNewNodeData(node) {
-        const schema       = this.getSchema()
+        const schema = this.getSchema()
         const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
             return !(schema[key] instanceof Relationship)
         })
@@ -280,7 +280,7 @@ class Model {
 
     validateProps() {
         const node = this
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             let res = node.getModel().validator().validate(node)
             if (res.error) {
                 reject(res.error)
@@ -325,9 +325,9 @@ class Model {
             return Promise.resolve(node)
         }
         return co(function*() {
-                let id                 = node.id
-                const schema           = node.getSchema()
-                const propertyKeys     = Object.getOwnPropertyNames(schema).filter(key=> {
+                let id = node.id
+                const schema = node.getSchema()
+                const propertyKeys = Object.getOwnPropertyNames(schema).filter(key=> {
                     return !(schema[key] instanceof Relationship)
                 })
                 const relationshipKeys = Object.getOwnPropertyNames(schema).filter(key=> {
@@ -375,9 +375,9 @@ class Model {
                         single: true
                     })
                     if (id === undefined) {
-                        id                       = dbNode.id
+                        id = dbNode.id
                         node[nodeKey].properties = dbNode[nodeKey].properties
-                        node[newDataKey]         = {}
+                        node[newDataKey] = {}
                         node._setId(dbNode.id)
                     }
                 }
@@ -447,8 +447,8 @@ class Model {
 
 
     getRelationships(relationshipKeys) {
-        const schema       = this.getSchema()
-        const from         = this
+        const schema = this.getSchema()
+        const from = this
         const returnObject = Array.isArray(relationshipKeys) || relationshipKeys === undefined
 
         return co(function*() {
@@ -472,7 +472,7 @@ class Model {
                 rel.key = key
                 return rel
             })
-            const relationships       = yield ModelHelper.findRelationships(from, relationshipObjects)
+            const relationships = yield ModelHelper.findRelationships(from, relationshipObjects)
 
             if (returnObject) {
                 return relationships
@@ -571,5 +571,4 @@ class Model {
 }
 
 Model.schema = schemaKey
-
 module.exports = Model
