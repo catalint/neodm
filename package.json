@@ -4,7 +4,7 @@
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -t 50 -L -v",
+    "test": "node node_modules/lab/bin/lab -m 10000 -t 50 -L -v",
     "test-cov-html": "node node_modules/lab/bin/lab -r html -o coverage.html -L"
   },
   "repository": {
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "code": "^2.1.0",
-    "lab": "^9.0.0"
+    "lab": "^9.0.0",
+    "neodb": "^1.1.13"
   }
 }
