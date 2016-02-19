@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/catalint/neodm.svg?branch=master)](https://travis-ci.org/catalint/neodm)
+
 Neo4j Graph Data Model
 ===
 
