@@ -36,10 +36,10 @@ class Article extends Model{
 API
 ===
 
-Model.find()
+Article.find()
 ---
 
-Model.find(id)
+Article.find(id)
 ---
 
 Article.validator()
