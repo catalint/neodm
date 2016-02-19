@@ -1,12 +1,14 @@
-"use strict"
+'use strict';
 
 class Relationship {
     constructor(to, relName) {
-        to           = to || {}
-        this.to      = to
-        this.relName = relName || to.name
+
+        to           = to || {};
+        this.to      = to;
+        this.relName = relName || to.name;
     }
 }
+
 class HasManyRelationship extends Relationship {
 
 }
@@ -18,4 +20,4 @@ module.exports = {
     HasManyRelationship,
     HasOneRelationship,
     Relationship
-}
+};

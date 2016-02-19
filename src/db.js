@@ -1,30 +1,37 @@
-"use strict"
-const neo4j = require('neo4j');
+'use strict';
+
+const Neo4j = require('neo4j');
 let db;
 let logger;
 
-function query(query) {
+const queryDB = (query) => {
+
     if (logger !== undefined) {
-        logger(query)
+        logger(query);
     }
     if (db === undefined) {
-        throw new Error("db not initialized")
+        throw new Error('db not initialized');
     }
-    return new Promise((resolve, reject)=> {
-        db.cypher(query, (err, result) => {
-                logger(result)
-                err ? reject(err) : resolve(result)
-            }
-        )
-    })
-}
+    return new Promise((resolve, reject) => {
+
+        const resolveQuery = (err, result) => {
+
+            logger(result);
+            err ? reject(err) : resolve(result);
+        };
+
+        db.cypher(query, resolveQuery);
+    });
+};
 
 module.exports = {
-    query: query,
+    query: queryDB,
     setLogger(loggerFunction){
-        logger = loggerFunction
+
+        logger = loggerFunction;
     },
     setDB(url){
-        db = new neo4j.GraphDatabase(url || "http://localhost:7474");
+
+        db = new Neo4j.GraphDatabase(url || 'http://localhost:7474');
     }
-}
+};
