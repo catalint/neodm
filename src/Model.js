@@ -588,12 +588,20 @@ class Model {
 
     getSchema() {
 
-        return this.getModel()[schemaKey]();
+        const schema = this.getModel()[schemaKey]();
+        if (schema.id === undefined) {
+            schema.id = Joi.number().label(`${this.getModelName()} ID`);
+        }
+        return schema;
     }
 
     static getSchema() {
 
-        return this.getModel()[schemaKey]();
+        const schema = this.getModel()[schemaKey]();
+        if (schema.id === undefined) {
+            schema.id = Joi.number().label(`${this.getModelName()} ID`);
+        }
+        return schema;
     }
 
     getModelName() {
