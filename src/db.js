@@ -2,7 +2,7 @@
 
 const Neo4j = require('neo4j');
 let db;
-let logger;
+let logger = () => {};
 
 const queryDB = (query) => {
 
