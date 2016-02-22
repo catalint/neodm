@@ -27,6 +27,7 @@ before((done) => {
         .then((data) => {
 
             NeoDM.db.setDB(data.url);
+            //NeoDM.db.setLogger(console.log);
             done();
         })
         .catch((err) => done(err));
@@ -230,6 +231,33 @@ it('should update relationship hasOne ', (done) => {
 
         expect(articleFromDB.author.id).to.be.equal(smith.id);
 
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should select model by property', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+
+        const johnData = { username: 'john smith' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const johnFromDB = yield User.find({ username: johnData.username });
+        expect(johnFromDB.username).to.be.equal(johnData.username);
 
         done();
     }).catch((err) => done(err));

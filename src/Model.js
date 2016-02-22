@@ -675,12 +675,27 @@ class Model {
         else if (typeof query === 'string') {
             result = this.find({ query: query, identifier: '$main', singleList: true });
         }
-        else {
+        else if (query.query !== undefined) {
             const queryOptions = { query: query.query, params: query.params, single: query.single, list: query.list };
             if (query.identifier) {
                 queryOptions.single = true;
                 queryOptions.schema = { [query.identifier]: this };
             }
+            result = ModelHelper.runQuery(queryOptions);
+        }
+        else {
+            const keys = Object.getOwnPropertyNames(query);
+            const props = keys.map((key) => {
+
+                return `${key}:{${key}}`;
+            });
+            const queryOptions = {
+                query : `MATCH (node:${this.getModelName()} {${props.join(', ')}}) RETURN node`,
+                params: query,
+                single: true,
+                list  : false
+            };
+            queryOptions.schema = { ['node']: this };
             result = ModelHelper.runQuery(queryOptions);
         }
 
