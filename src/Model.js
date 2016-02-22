@@ -312,8 +312,11 @@ class Model {
         if (node instanceof Neo4j.Node) {
             objNode = node;
             for (const key of propertyKeys) {
-                if (schema[key].describe().type === 'any' && objNode.properties[key] !== undefined) {
+                if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object') && objNode.properties[key] !== undefined) {
                     objNode.properties[key] = JSON.parse(objNode.properties[key]);
+                }
+                else if ((schema[key].describe().type === 'array' ) && objNode.properties[key] !== undefined) {
+                    objNode.properties[key] = objNode.properties[key].map((p) => JSON.parse(p));
                 }
             }
         }
@@ -409,8 +412,12 @@ class Model {
                     self[key] = validatedProps[key];
                 }
                 if (self[newDataKey].hasOwnProperty(key)) {
-                    if (schema[key].describe().type === 'any') {
+
+                    if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object') && objNode.properties[key] !== undefined) {
                         setProperties[key] = JSON.stringify(self[newDataKey][key]);
+                    }
+                    else if ((schema[key].describe().type === 'array' )) {
+                        setProperties[key] = self[newDataKey][key].map((property) => JSON.stringify(property));
                     }
                     else {
                         setProperties[key] = self[newDataKey][key];
