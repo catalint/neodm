@@ -49,6 +49,39 @@ it('should create a test server', (done) => {
     done();
 });
 
+it('should use sent logger', (done) => {
+
+    let firstMessage;
+    const gotMessage = () => {
+
+        expect(firstMessage).to.not.equal(undefined);
+        NeoDM.db.setLogger(() => {});
+        done();
+    };
+
+    NeoDM.db.setLogger((data) => {
+
+        if (firstMessage === undefined) {
+            firstMessage = data;
+            gotMessage();
+        }
+    });
+
+    class User extends Model {
+        static [Model.schema]() {
+
+            return {
+                username: Joi.string()
+            };
+        }
+
+    }
+
+    const johnData = { username: 'john' };
+    const john = new User(johnData);
+    return john.save();
+});
+
 it('should define a new model with no properties', (done) => {
 
     class User extends Model {
@@ -157,7 +190,7 @@ it('should save relationship hasOne ', (done) => {
         expect(article.author.id).to.be.equal(john.id);
 
         const articleFromDB = yield Article.find(article.id);
-        yield articleFromDB.inflateRelationships();
+        yield articleFromDB.inflate();
 
         expect(articleFromDB.title).to.be.equal('hello world');
         expect(articleFromDB.author).to.be.an.object();
@@ -223,7 +256,7 @@ it('should update relationship hasOne ', (done) => {
 
 
         const articleFromDB = yield Article.find(article.id);
-        yield articleFromDB.inflateRelationships();
+        yield articleFromDB.inflate();
 
 
         expect(articleFromDB.title).to.be.equal('hello world');
