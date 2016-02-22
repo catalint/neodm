@@ -263,3 +263,33 @@ it('should select model by property', (done) => {
     }).catch((err) => done(err));
 
 });
+
+it('should delete a model', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+
+        const johnData = { username: 'john smith TO_BE_DELETED' };
+        const john = new User(johnData);
+        yield john.save();
+
+        let johnFromDB = yield User.find({ username: johnData.username });
+        expect(johnFromDB.username).to.be.equal(johnData.username);
+        yield john.delete();
+
+        johnFromDB = yield User.find({ username: johnData.username });
+        expect(johnFromDB).to.be.equal(undefined);
+
+        done();
+    }).catch((err) => done(err));
+
+});

@@ -347,17 +347,18 @@ class Model {
         });
     }
 
-    delete(options) {
+    delete() {
 
         const self = this;
         return Co(function *() {
 
-            if (self.id !== undefined) {
-                yield ModelHelper.runRaw({
-                    query : `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} REMOVE node:${this.getModelName()} SET node:_${this.getModelName()}`,
-                    params: { id: self.id }
-                });
+            if (self.id === undefined) {
+                throw new Error('NOT_FOUND');
             }
+            return yield ModelHelper.runRaw({
+                query : `MATCH (node:${self.getModelName()}) WHERE id(node) = {id} REMOVE node:${self.getModelName()} SET node:_${self.getModelName()} RETURN node;`,
+                params: { id: self.id }
+            });
         });
     }
 
