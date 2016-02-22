@@ -6,9 +6,7 @@ let logger = () => {};
 
 const queryDB = (query) => {
 
-    if (logger !== undefined) {
-        logger(query);
-    }
+    logger(query);
     if (db === undefined) {
         throw new Error('db not initialized');
     }

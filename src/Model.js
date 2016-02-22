@@ -576,7 +576,13 @@ class Model {
         });
     }
 
+    //@deprecated
     inflateRelationships(relationshipKeys) {
+
+        return this.inflate(relationshipKeys);
+    }
+
+    inflate(relationshipKeys) {
 
         const self = this;
         if (relationshipKeys !== undefined && !Array.isArray(relationshipKeys)) {
