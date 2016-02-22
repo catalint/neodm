@@ -417,7 +417,7 @@ class Model {
                         setProperties[key] = JSON.stringify(self[newDataKey][key]);
                     }
                     else if ((schema[key].describe().type === 'array' )) {
-                        setProperties[key] = self[newDataKey][key].map((property) => JSON.stringify(property));
+                        setProperties[key] = self[newDataKey][key].map((property) => JSON.stringify(property)); // todo add extra check if array items can be objects, if they are all strings/numbers no need to serialize
                     }
                     else {
                         setProperties[key] = self[newDataKey][key];
