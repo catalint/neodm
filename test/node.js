@@ -277,6 +277,15 @@ it('should delete a model', (done) => {
             }
 
         }
+        class _User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
 
         const johnData = { username: 'john smith TO_BE_DELETED' };
         const john = new User(johnData);
@@ -288,6 +297,9 @@ it('should delete a model', (done) => {
 
         johnFromDB = yield User.find({ username: johnData.username });
         expect(johnFromDB).to.be.equal(undefined);
+
+        johnFromDB = yield _User.find({ username: johnData.username });
+        expect(johnFromDB.id).to.be.equal(john.id);
 
         done();
     }).catch((err) => done(err));
