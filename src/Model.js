@@ -106,11 +106,17 @@ class Model {
 
 
         if (node !== null && node !== undefined && typeof node === 'object' && !(node instanceof Neo4j.Node)) {
-            this.inflateData(node);
+            this.set(node);
         }
     }
 
+    //@deprecated
     inflateData(data) {
+
+        return this.set(data);
+    }
+
+    set(data) {
 
         const schema = this.getSchema();
         const propertyKeys = Object.getOwnPropertyNames(schema).filter((key) => {
