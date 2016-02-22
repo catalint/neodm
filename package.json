@@ -1,10 +1,10 @@
 {
   "name": "neodm",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -m 10000 -t 50 -L -v",
+    "test": "node node_modules/lab/bin/lab -m 100000 -t 50 -L -v",
     "test-cov-html": "node node_modules/lab/bin/lab -r html -o coverage.html -L"
   },
   "repository": {
