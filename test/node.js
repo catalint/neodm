@@ -27,7 +27,6 @@ before((done) => {
         .then((data) => {
 
             NeoDM.db.setDB(data.url);
-            //NeoDM.db.setLogger(console.log);
             done();
         })
         .catch((err) => done(err));
@@ -56,6 +55,7 @@ it('should use sent logger', (done) => {
 
         expect(firstMessage).to.not.equal(undefined);
         NeoDM.db.setLogger(() => {});
+        //NeoDM.db.setLogger(console.log);
         done();
     };
 
@@ -401,6 +401,38 @@ it('should delete a model', (done) => {
 
         johnFromDB = yield _User.find({ username: johnData.username });
         expect(johnFromDB.id).to.be.equal(john.id);
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+it('should find in array', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+        const users = yield User.find({ id: [smith.id, john.id] });
+        expect(users).to.be.an.array();
+        expect(users).to.have.length(2);
+
 
         done();
     }).catch((err) => done(err));

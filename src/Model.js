@@ -697,16 +697,39 @@ class Model {
             result = ModelHelper.runQuery(queryOptions);
         }
         else {
-            const keys = Object.getOwnPropertyNames(query);
+            const allKeys = Object.getOwnPropertyNames(query);
+            const keys = allKeys.filter((key) => !Array.isArray(query[key]));
+            const arrayKeys = allKeys.filter((key) => Array.isArray(query[key]));
             const props = keys.map((key) => {
 
                 return `${key}:{${key}}`;
             });
+            const arrayProps = arrayKeys.map((key) => {
+
+                let propResult;
+                if (key === 'id') {
+                    propResult = ` id(node) IN {${key}} `;
+                }
+                else {
+                    propResult = ` node.${key} IN {${key}} `;
+                }
+                return propResult;
+            });
+
+            let queryString = `MATCH (node:${this.getModelName()}`;
+            if (props.length) {
+                queryString += ` {${props.join(', ')}} `;
+            }
+            queryString += ')';
+            if (arrayProps.length) {
+                queryString += ` WHERE ${arrayProps.join(' AND ')} `;
+            }
+
             const queryOptions = {
-                query : `MATCH (node:${this.getModelName()} {${props.join(', ')}}) RETURN node`,
+                query : queryString + ' RETURN node',
                 params: query,
                 single: true,
-                list  : false
+                list  : !!arrayProps.length
             };
             queryOptions.schema = { ['node']: this };
             result = ModelHelper.runQuery(queryOptions);
