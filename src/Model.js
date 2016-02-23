@@ -420,7 +420,7 @@ class Model {
                 }
                 if (self[newDataKey].hasOwnProperty(key)) {
 
-                    if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object') && objNode.properties[key] !== undefined) {
+                    if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object')) {
                         setProperties[key] = JSON.stringify(self[newDataKey][key]);
                     }
                     else if ((schema[key].describe().type === 'array' )) {

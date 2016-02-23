@@ -126,7 +126,7 @@ class ModelHelper {
         resultSchema = resultSchema || {};
         return Co(function*() {
 
-            const results = yield dbQuery({
+            const results = yield Db.query({
                 query: query
             });
 
@@ -148,3 +148,5 @@ class ModelHelper {
 }
 
 module.exports = ModelHelper;
+
+const Model = require('./Model');
