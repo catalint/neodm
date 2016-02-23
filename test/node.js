@@ -438,3 +438,76 @@ it('should find in array', (done) => {
     }).catch((err) => done(err));
 
 });
+
+
+it('should update relationship hasMany', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+        class Comment extends Model {
+            static [Model.schema]() {
+
+                return {
+                    text: Joi.string()
+                };
+            }
+
+        }
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    authors : Model.hasMany(User),
+                    comments: Model.hasMany(Comment)
+                };
+            }
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+
+        const article = new Article({ title: 'hello world', authors: [john, smith] });
+        article.setRelationship('comments', [new Comment({ text: 'c1' }), new Comment({ text: 'c2' }), new Comment({ text: 'c3' })]);
+        yield article.save();
+
+
+        expect(article.title).to.be.equal('hello world');
+        expect(article.authors).to.be.an.array();
+
+        expect(article.authors).to.have.length(2);
+
+        article.setRelationship('authors', [john, smith]);
+        yield article.save();
+
+
+        expect(article.authors).to.be.an.array();
+        expect(article.authors).to.have.length(2);
+
+
+        const articleFromDB = yield Article.find(article.id);
+        yield articleFromDB.inflate();
+
+        expect(articleFromDB.authors).to.be.an.array();
+        expect(articleFromDB.authors).to.have.length(2);
+
+        done();
+    }).catch((err) => done(err));
+
+});

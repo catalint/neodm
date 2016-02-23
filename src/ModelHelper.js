@@ -77,7 +77,7 @@ class ModelHelper {
                     cypherReturns.push(rel.key);
                 }
                 else if (rel instanceof HasManyRelationship) {
-                    cypherReturns.push(`collect(${rel.key}) as ${rel.key}`);
+                    cypherReturns.push(`collect(distinct ${rel.key}) as ${rel.key}`);
                 }
                 else {
                     throw new Error('Expected relation to extend Relationship class');
