@@ -109,6 +109,7 @@ class ModelHelper {
                             throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)} prev:${JSON.stringify(prev[rel.key])} cur:${JSON.stringify(cur[rel.key])}`);
                         }
                     });
+                    return cur;
                 }, results[0]);
 
                 throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rels:${JSON.stringify(rels.filter((rel) => rel instanceof HasOneRelationship))} results:${JSON.stringify(results)}`);
