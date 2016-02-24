@@ -35,40 +35,4 @@ class Article extends Model{
 
 ```
 
-API
-===
-
-Article.find()
----
-
-Article.find(id)
----
-
-Article.validator()
----
-Returns a `Joi` validation object for properties & relationships
-
-
-Article.save()
----
-
-Article.addRelationship(key,id)
----
-
-Article.addRelationship(key,model)
----
-
-Article.setRelationship(key,id)
----
-
-Article.setRelationship(key,model)
----
-
-Article.deleteRelationship(key,id)
----
-
-Article.deleteRelationship(key,model)
----
-
-Article.deleteRelationship(key)
----
+better see the tests
