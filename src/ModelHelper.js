@@ -105,8 +105,8 @@ class ModelHelper {
 
                     hasOneRels.forEach((rel) => {
 
-                        if (JSON.stringify(prev) === JSON.stringify(cur)) {
-                            throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)} prev:${JSON.stringify(prev)} cur:${JSON.stringify(cur)}`);
+                        if (JSON.stringify(prev[rel.key]) === JSON.stringify(cur[rel.key])) {
+                            throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)} prev:${JSON.stringify(prev[rel.key])} cur:${JSON.stringify(cur[rel.key])}`);
                         }
                     });
                 }, results[0]);
