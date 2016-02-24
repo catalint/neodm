@@ -509,5 +509,129 @@ it('should update relationship hasMany', (done) => {
 
         done();
     }).catch((err) => done(err));
+});
+
+it('save model with empty hasMany relationship', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+        class Comment extends Model {
+            static [Model.schema]() {
+
+                return {
+                    text: Joi.string()
+                };
+            }
+
+        }
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    authors : Model.hasMany(User),
+                    comments: Model.hasMany(Comment)
+                };
+            }
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+
+        const article = new Article({ title: 'hello world', authors: [john, smith] });
+        yield article.save();
+
+
+        expect(article.title).to.be.equal('hello world');
+        expect(article.authors).to.be.an.array();
+
+        expect(article.authors).to.have.length(2);
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+it('double set hasOne before save', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+        class Comment extends Model {
+            static [Model.schema]() {
+
+                return {
+                    text: Joi.string()
+                };
+            }
+
+        }
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    author  : Model.hasOne(User),
+                    comments: Model.hasMany(Comment)
+                };
+            }
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+
+        const article = new Article({ title: 'hello world' });
+        article.author = john;
+        article.author = smith;
+
+        yield article.save();
+
+
+        expect(article.title).to.be.equal('hello world');
+        expect(article.author).to.be.an.object();
+
+        expect(article.author.id).to.be.equal(smith.id);
+
+        const articleFromDB = yield Article.find(article.id);
+        yield articleFromDB.inflate();
+
+        expect(articleFromDB.title).to.be.equal('hello world');
+        expect(articleFromDB.author).to.be.an.object();
+
+        expect(articleFromDB.author.id).to.be.equal(smith.id);
+
+        done();
+    }).catch((err) => done(err));
 
 });

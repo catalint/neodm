@@ -100,6 +100,17 @@ class ModelHelper {
                 return undefined;
             }
             else if (results.length > 1) {
+                const hasOneRels = rels.filter((rel) => rel instanceof HasOneRelationship);
+                results.reduce((prev, cur) => {
+
+                    hasOneRels.forEach((rel) => {
+
+                        if (JSON.string(prev) === JSON.string(cur)) {
+                            throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)} prev:${JSON.stringify(prev)} cur:${JSON.stringify(cur)}`);
+                        }
+                    });
+                }, results[0]);
+
                 throw new Error(`Unexpected relationship has more than 1 result model:${JSON.stringify(from.getModelName())} rels:${JSON.stringify(rels.filter((rel) => rel instanceof HasOneRelationship))} results:${JSON.stringify(results)}`);
             }
             else if (results[0] !== undefined) {
