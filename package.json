@@ -1,6 +1,6 @@
 {
   "name": "neodm",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {

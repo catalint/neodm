@@ -73,16 +73,21 @@ class ModelHelper {
             const cypherReturns = [];
             const optionalMatches = rels.map((rel) => {
 
+
+                let cypherWith = '';
                 if (rel instanceof HasOneRelationship) {
-                    cypherReturns.push(rel.key);
+                    cypherWith = rel.key;
                 }
                 else if (rel instanceof HasManyRelationship) {
-                    cypherReturns.push(`collect(distinct ${rel.key}) as ${rel.key}`);
+                    cypherWith = `collect(distinct ${rel.key}) as ${rel.key}`;
                 }
                 else {
                     throw new Error('Expected relation to extend Relationship class');
                 }
-                return `OPTIONAL MATCH (${mainNode})-[:${rel.relName}]->(${rel.key}:${rel.to.getModelName()})`;
+                const optionalMatch = `OPTIONAL MATCH (${mainNode})-[:${rel.relName}]->(${rel.key}:${rel.to.getModelName()}) WITH ${cypherReturns.concat([cypherWith]).join(', ')}`;
+                cypherReturns.push(rel.key);
+
+                return optionalMatch;
             });
 
             const cypherQuery = {
