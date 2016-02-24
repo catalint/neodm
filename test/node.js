@@ -568,7 +568,7 @@ it('save model with empty hasMany relationship', (done) => {
 
 });
 
-it('double set hasOne before save', (done) => {
+it('should not double set hasOne before save', (done) => {
 
     Co(function *() {
 
@@ -630,6 +630,44 @@ it('double set hasOne before save', (done) => {
         expect(articleFromDB.author).to.be.an.object();
 
         expect(articleFromDB.author.id).to.be.equal(smith.id);
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should allow circular referance', (done) => {
+
+    Co(function *() {
+
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    hasDraft: Model.hasMany(Article),
+                    draftOf : Model.hasOne(Article)
+                };
+            }
+        }
+
+
+        const article = new Article({ title: 'hello world' });
+
+        yield article.save();
+
+
+        expect(article.title).to.be.equal('hello world');
+
+        const articleFromDB = yield Article.find(article.id);
+        yield articleFromDB.inflate();
+
+        expect(articleFromDB.title).to.be.equal('hello world');
+
+        expect(articleFromDB.hasDraft).to.be.an.array();
+        expect(articleFromDB.hasDraft).to.be.length(0);
 
         done();
     }).catch((err) => done(err));

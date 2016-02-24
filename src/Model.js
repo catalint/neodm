@@ -152,11 +152,16 @@ class Model {
             return this[schemaValidation];
         }
         const schema = this.getSchema();
-        const ownRefs = [];
+        const ownSingleRefs = [];
+        const ownManyRefs = [];
         Object.getOwnPropertyNames(schema).forEach((propName) => {
 
-            if (schema[propName].to === this) {
-                ownRefs.push(propName);
+            if (schema[propName].to === this && schema[propName] instanceof Model.hasOne().constructor) {
+                ownSingleRefs.push(propName);
+                delete schema[propName];
+            }
+            else if (schema[propName].to === this && schema[propName] instanceof Model.hasMany().constructor) {
+                ownManyRefs.push(propName);
                 delete schema[propName];
             }
             else if (schema[propName] instanceof Model.hasOne().constructor) {
@@ -168,10 +173,17 @@ class Model {
         });
 
         let joiSchema = Joi.object(schema);
-        if (ownRefs.length) {
+        if (ownSingleRefs.length) {
             const refKeys = {};
-            for (const propName of ownRefs) {
+            for (const propName of ownSingleRefs) {
                 refKeys[propName] = joiSchema;
+            }
+            joiSchema = joiSchema.keys(refKeys);
+        }
+        if (ownManyRefs.length) {
+            const refKeys = {};
+            for (const propName of ownManyRefs) {
+                refKeys[propName] = Joi.array().items(joiSchema);
             }
             joiSchema = joiSchema.keys(refKeys);
         }
