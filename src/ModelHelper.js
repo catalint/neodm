@@ -70,7 +70,7 @@ class ModelHelper {
 
         return Co(function*() {
 
-            const cypherReturns = [];
+            const cypherReturns = [mainNode];
             const optionalMatches = rels.map((rel) => {
 
 
