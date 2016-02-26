@@ -173,20 +173,24 @@ class Model {
         });
 
         let joiSchema = Joi.object(schema);
-        if (ownSingleRefs.length) {
-            const refKeys = {};
-            for (const propName of ownSingleRefs) {
-                refKeys[propName] = joiSchema;
+        for (let i = 0; i < 2; ++i) { //two passes to solve circular validation errors
+
+            if (ownSingleRefs.length) {
+                const refKeys = {};
+                for (const propName of ownSingleRefs) {
+                    refKeys[propName] = joiSchema;
+                }
+                joiSchema = joiSchema.keys(refKeys);
             }
-            joiSchema = joiSchema.keys(refKeys);
-        }
-        if (ownManyRefs.length) {
-            const refKeys = {};
-            for (const propName of ownManyRefs) {
-                refKeys[propName] = Joi.array().items(joiSchema);
+            if (ownManyRefs.length) {
+                const refKeys = {};
+                for (const propName of ownManyRefs) {
+                    refKeys[propName] = Joi.array().items(joiSchema);
+                }
+                joiSchema = joiSchema.keys(refKeys);
             }
-            joiSchema = joiSchema.keys(refKeys);
         }
+
         this[schemaValidation] = joiSchema.label(this.getModelName());
         return this[schemaValidation];
     }

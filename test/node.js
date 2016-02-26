@@ -673,3 +673,41 @@ it('should allow circular referance', (done) => {
     }).catch((err) => done(err));
 
 });
+
+
+it('should allow circular referance on validation', (done) => {
+
+    Co(function *() {
+
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    hasDraft: Model.hasMany(Article),
+                    draftOf : Model.hasOne(Article)
+                };
+            }
+        }
+
+
+        const article = new Article({ title: 'hello world', hasDraft: [new Article({ title: 'draft' })] });
+
+        yield article.save();
+
+
+        expect(article.title).to.be.equal('hello world');
+
+        const articleFromDB = yield Article.find(article.id);
+        yield articleFromDB.inflate();
+
+        expect(articleFromDB.title).to.be.equal('hello world');
+
+        expect(articleFromDB.hasDraft).to.be.an.array();
+        expect(articleFromDB.hasDraft).to.be.length(1);
+
+        done();
+    }).catch((err) => done(err));
+
+});
