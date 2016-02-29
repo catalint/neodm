@@ -51,7 +51,7 @@ it('should create a test server', (done) => {
 it('should use sent logger', (done) => {
 
     let firstMessage = true;
-    const gotMessage = () => {
+    const gotMessage = (data) => {
 
         if (firstMessage) {
             firstMessage = false;
@@ -75,7 +75,7 @@ it('should use sent logger', (done) => {
 
     const johnData = { username: 'john' };
     const john = new User(johnData);
-    return john.save();
+    john.save();
 });
 
 it('should define a new model with no properties', (done) => {
