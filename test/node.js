@@ -50,22 +50,18 @@ it('should create a test server', (done) => {
 
 it('should use sent logger', (done) => {
 
-    let firstMessage;
+    let firstMessage = true;
     const gotMessage = () => {
 
-        expect(firstMessage).to.not.equal(undefined);
-        NeoDM.db.setLogger(() => {});
-        //NeoDM.db.setLogger(console.log);
-        done();
+        if (firstMessage) {
+            firstMessage = false;
+            NeoDM.db.setLogger(() => {});
+            //NeoDM.db.setLogger(console.log);
+            done();
+        }
     };
 
-    NeoDM.db.setLogger((data) => {
-
-        if (firstMessage === undefined) {
-            firstMessage = data;
-            gotMessage();
-        }
-    });
+    NeoDM.db.setLogger(gotMessage);
 
     class User extends Model {
         static [Model.schema]() {
