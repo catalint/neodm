@@ -173,7 +173,7 @@ class Model {
         });
 
         let joiSchema = Joi.object(schema);
-        for (let i = 0; i < 3; ++i) { //two passes to solve circular validation errors
+        for (let i = 0; i < 2; ++i) { //two passes to solve circular validation errors
 
             if (ownSingleRefs.length) {
                 const refKeys = {};
