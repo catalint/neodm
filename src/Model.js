@@ -202,8 +202,17 @@ class Model {
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`);
         }
-        if (!Array.isArray(model) && !(model instanceof Model || ModelHelper.getID(model) === undefined)) {
-            throw new Error(`Expected instance of Model, id or {id:Number}, got ${require('util').inspect(model)}`);
+        if (!Array.isArray(model)) {
+            if (!(model instanceof Model) && ModelHelper.getID(model) === undefined) {
+                throw new Error(`Expected instance of Model, id or {id:Number}, got ${require('util').inspect(model)}`);
+            }
+        }
+        else {
+            for (const m of model) {
+                if (!(m instanceof Model) && ModelHelper.getID(m) === undefined) {
+                    throw new Error(`Expected instance of Model, id or {id:Number}, got ${require('util').inspect(m)}`);
+                }
+            }
         }
 
         if (rel instanceof HasOneRelationship) {
@@ -221,17 +230,16 @@ class Model {
 
             this[relationshipsKey].push({ action: 'delete', rel: rel });
             this[nodeKey].relationships[key] = [];
-            if (Array.isArray(model)) {
-                model.forEach((m) => {
 
-                    this[relationshipsKey].push({ action: 'add', rel: rel, to: m });
-                    this[nodeKey].relationships[key].push(m);
-                });
+            if (!Array.isArray(model)) {
+                model = [model];
             }
-            else {
-                this[relationshipsKey].push({ action: 'add', rel: rel, to: model });
-                this[nodeKey].relationships[key].push(model);
-            }
+
+            model.forEach((m) => {
+
+                this[relationshipsKey].push({ action: 'add', rel: rel, to: m });
+                this[nodeKey].relationships[key].push(m);
+            });
         }
     }
 
