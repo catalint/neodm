@@ -749,6 +749,8 @@ it('should allow circular and save draft by id', (done) => {
 
         articleFromDB.title = 'smth new';
 
+        articleFromDB.addRelationship('hasDraft', draft.id);
+
         yield articleFromDB.save();
 
         done();

@@ -68,7 +68,7 @@ class Model {
                     enumerable  : true,
                     get(){
 
-                        return Object.freeze(this[nodeKey].relationships[key]);
+                        return this[nodeKey].relationships[key];
                     },
                     set(value){
 
