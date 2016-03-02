@@ -165,27 +165,27 @@ class Model {
                 delete schema[propName];
             }
             else if (schema[propName] instanceof Model.hasOne().constructor) {
-                schema[propName] = schema[propName].to.validator();
+                schema[propName] = Joi.alternatives().try(schema[propName].to.validator(), Joi.number());
             }
             else if (schema[propName] instanceof Model.hasMany().constructor) {
-                schema[propName] = Joi.array().items(schema[propName].to.validator());
+                schema[propName] = Joi.array().items([schema[propName].to.validator(), Joi.number()]);
             }
         });
 
         let joiSchema = Joi.object(schema);
-        for (let i = 0; i < 2; ++i) { //two passes to solve circular validation errors
+        for (let i = 0; i < 3; ++i) { //two passes to solve circular validation errors
 
             if (ownSingleRefs.length) {
                 const refKeys = {};
                 for (const propName of ownSingleRefs) {
-                    refKeys[propName] = joiSchema;
+                    refKeys[propName] = Joi.alternatives().try(joiSchema, Joi.number());
                 }
                 joiSchema = joiSchema.keys(refKeys);
             }
             if (ownManyRefs.length) {
                 const refKeys = {};
                 for (const propName of ownManyRefs) {
-                    refKeys[propName] = Joi.array().items(joiSchema);
+                    refKeys[propName] = Joi.array().items([joiSchema, Joi.number()]);
                 }
                 joiSchema = joiSchema.keys(refKeys);
             }
@@ -242,8 +242,8 @@ class Model {
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`);
         }
-        if (!(model instanceof Model || ModelHelper.getID(model) === undefined)) {
-            throw new Error('Expected instance of Model, id or {id:Number}');
+        if (!(model instanceof Model) && ModelHelper.getID(model) === undefined) {
+            throw new Error(`Expected instance of Model, id or {id:Number}, got ${model}`);
         }
 
         if (rel instanceof HasOneRelationship) {

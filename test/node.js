@@ -633,7 +633,7 @@ it('should not double set hasOne before save', (done) => {
 });
 
 
-it('should allow circular referance', (done) => {
+it('should allow circular reference', (done) => {
 
     Co(function *() {
 
@@ -671,7 +671,7 @@ it('should allow circular referance', (done) => {
 });
 
 
-it('should allow circular referance on validation', (done) => {
+it('should allow circular reference on validation', (done) => {
 
     Co(function *() {
 
@@ -702,6 +702,54 @@ it('should allow circular referance on validation', (done) => {
 
         expect(articleFromDB.hasDraft).to.be.an.array();
         expect(articleFromDB.hasDraft).to.be.length(1);
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should allow circular and save draft by id', (done) => {
+
+    Co(function *() {
+
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title   : Joi.string().default('test'),
+                    hasDraft: Model.hasMany(Article),
+                    draftOf : Model.hasOne(Article)
+                };
+            }
+        }
+
+
+        const article = new Article({ title: 'hello world' });
+
+        yield article.save();
+
+
+        const draft = new Article({ title: 'hello world draft', draftOf: article });
+
+        yield draft.save();
+
+        article.addRelationship('hasDraft', draft.id);
+
+        yield article.save();
+
+        const articleFromDB = yield Article.find(article.id);
+
+        expect(articleFromDB).to.exist();
+
+        yield articleFromDB.inflate();
+
+        expect(articleFromDB.hasDraft[0].id).to.be.equal(draft.id);
+
+        articleFromDB.title = 'smth new';
+
+        yield articleFromDB.save();
 
         done();
     }).catch((err) => done(err));
