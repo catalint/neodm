@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node node_modules/lab/bin/lab -m 100000 -t 50 -L -v",
-    "test-cov-html": "node node_modules/lab/bin/lab -r html -o coverage.html -L"
+    "test-cov": "node node_modules/lab/bin/lab  -m 100000 -t 50 -r lcov",
+    "report-cov": "node node_modules/lab/bin/lab  -m 100000 -t 50 -r lcov | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "code": "^2.1.0",
+    "coveralls": "^2.11.8",
     "lab": "^10.1.0",
     "neodb": "^1.1.13"
   }
