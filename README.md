@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/catalint/neodm.svg?branch=master)](https://travis-ci.org/catalint/neodm)
+[![Build Status](https://travis-ci.org/catalint/neodm.svg?branch=master)](https://travis-ci.org/catalint/neodm) [![Coverage Status](https://coveralls.io/repos/github/catalint/neodm/badge.svg?branch=master)](https://coveralls.io/github/catalint/neodm?branch=master)
+
 
 Neo4j Graph Data Model
 ===
