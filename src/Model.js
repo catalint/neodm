@@ -720,20 +720,20 @@ class Model {
                 list: true
             });
         }
+        else if (Array.isArray(query) && !(query.filter((no) => isNaN(Number(no)))).length) {
+            result = this.find({
+                query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
+                params: { id: query.map((no) => Number(no)) },
+                identifier: 'node',
+                list: true
+            });
+        }
         else if (!isNaN(Number(query))) {
             result = this.find({
                 query: `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
                 params: { id: Number(query) },
                 identifier: 'node',
                 single: true
-            });
-        }
-        else if (Array.isArray(query) && !query.filter((no) => isNaN(Number(no))).length) {
-            result = this.find({
-                query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
-                params: { id: query.map((no) => Number(no)) },
-                identifier: 'node',
-                list: true
             });
         }
         else if (typeof query === 'string') {

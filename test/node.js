@@ -916,3 +916,32 @@ it('should call afterInflate', (done) => {
     }).catch((err) => done(err));
 
 });
+
+
+it('should find in array of just 1 element', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+        const users = yield User.find([smith.id]);
+        expect(users).to.be.an.array();
+        expect(users).to.have.length(1);
+
+
+        done();
+    }).catch((err) => done(err));
+
+});
