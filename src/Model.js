@@ -42,7 +42,7 @@ class Model {
 
             Object.defineProperty(this, key, {
                 configurable: false,
-                enumerable  : true,
+                enumerable: true,
                 get(){
 
                     return this[nodeKey].properties[key]; // todo some Object.observe to detect array/object changes and call set
@@ -65,7 +65,7 @@ class Model {
             if (schema[key] instanceof HasManyRelationship) {
                 Object.defineProperty(this, key, {
                     configurable: false,
-                    enumerable  : true,
+                    enumerable: true,
                     get(){
 
                         return this[nodeKey].relationships[key];
@@ -79,7 +79,7 @@ class Model {
             else if (schema[key] instanceof HasOneRelationship) {
                 Object.defineProperty(this, key, {
                     configurable: false,
-                    enumerable  : true,
+                    enumerable: true,
                     get(){
 
                         return this[nodeKey].relationships[key];
@@ -108,6 +108,22 @@ class Model {
         if (node !== null && node !== undefined && typeof node === 'object' && !(node instanceof Neo4j.Node)) {
             this.set(node);
         }
+
+        this.afterInit();
+    }
+
+    afterInit() {
+
+    }
+
+    afterInflate(relationshipKeys) {
+
+        return Promise.resolve();
+    }
+
+    beforeValidate() {
+
+        return Promise.resolve();
     }
 
     //@deprecated
@@ -317,9 +333,9 @@ class Model {
         this[nodeKey]._id = id;
         Object.defineProperty(this, 'id', {
             configurable: true,
-            enumerable  : true,
-            value       : this[nodeKey]._id,
-            writable    : false
+            enumerable: true,
+            value: this[nodeKey]._id,
+            writable: false
         });
 
     }
@@ -333,8 +349,8 @@ class Model {
         });
 
         let objNode = {
-            _id          : undefined,
-            properties   : {},
+            _id: undefined,
+            properties: {},
             relationships: {}
         };
 
@@ -354,9 +370,9 @@ class Model {
 
         Object.defineProperty(this, nodeKey, {
             configurable: true,
-            enumerable  : false,
-            value       : objNode,
-            writable    : false
+            enumerable: false,
+            value: objNode,
+            writable: false
         });
 
         this._setId(this[nodeKey]._id);
@@ -386,7 +402,7 @@ class Model {
                 throw new Error('NOT_FOUND');
             }
             return yield ModelHelper.runRaw({
-                query : `MATCH (node:${self.getModelName()}) WHERE id(node) = {id} REMOVE node:${self.getModelName()} SET node:_${self.getModelName()} RETURN node;`,
+                query: `MATCH (node:${self.getModelName()}) WHERE id(node) = {id} REMOVE node:${self.getModelName()} SET node:_${self.getModelName()} RETURN node;`,
                 params: { id: self.id }
             });
         });
@@ -400,7 +416,7 @@ class Model {
             if (self.id !== undefined) {
 
                 const clone = yield ModelHelper.runRaw({
-                    query : `MATCH (node:${this.getModelName()})
+                    query: `MATCH (node:${this.getModelName()})
                                 WHERE id(node) = {id}
                                 WITH n as map
                                 CREATE (copy:${this.getModelName()})
@@ -421,6 +437,7 @@ class Model {
         }
         const saveData = function *() {
 
+            yield self.beforeValidate();
             let id = self.id;
             const schema = self.getSchema();
             const propertyKeys = Object.getOwnPropertyNames(schema).filter((key) => {
@@ -460,7 +477,7 @@ class Model {
             if (id === undefined) {
                 if (Object.getOwnPropertyNames(setProperties).length) {
                     cypherNode = {
-                        query : `CREATE (node:${self.getModelName()} {props}) return node`,
+                        query: `CREATE (node:${self.getModelName()} {props}) return node`,
                         params: { props: setProperties }
                     };
                 }
@@ -472,13 +489,13 @@ class Model {
             }
             else {
                 cypherNode = {
-                    query : `MATCH (node:${self.getModelName()}) WHERE id(node)={id} SET node+={props} return node`,
+                    query: `MATCH (node:${self.getModelName()}) WHERE id(node)={id} SET node+={props} return node`,
                     params: { id: id, props: setProperties }
                 };
             }
             if (Object.getOwnPropertyNames(setProperties).length > 0 || id === undefined) {
                 const dbNode = yield ModelHelper.runQuery({
-                    query : cypherNode.query,
+                    query: cypherNode.query,
                     params: cypherNode.params,
                     schema: { node: self.getModel() },
                     single: true
@@ -523,26 +540,26 @@ class Model {
 
                 if (rel.action === 'add') {
                     query = {
-                        query : `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
+                        query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
                         params: {
                             from: self.id,
-                            to  : idTo
+                            to: idTo
                         }
                     };
                 }
                 else if (rel.action === 'delete') {
                     if (idTo !== undefined) {
                         query = {
-                            query : `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} DELETE rel`,
+                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} DELETE rel`,
                             params: {
                                 from: self.id,
-                                to  : rel.to
+                                to: rel.to
                             }
                         };
                     }
                     else {
                         query = {
-                            query : `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(:${rel.rel.to.getModelName()}) WHERE id(from) = {from} DELETE rel`,
+                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(:${rel.rel.to.getModelName()}) WHERE id(from) = {from} DELETE rel`,
                             params: {
                                 from: self.id
                             }
@@ -627,6 +644,8 @@ class Model {
             for (const key in relationships) {
                 self[nodeKey].relationships[key] = relationships[key];
             }
+
+            return self.afterInflate(relationshipKeys);
         });
     }
 
@@ -696,25 +715,25 @@ class Model {
 
         if (query === undefined) {
             result = this.find({
-                query     : `MATCH (node:${this.getModelName()}) RETURN node`,
+                query: `MATCH (node:${this.getModelName()}) RETURN node`,
                 identifier: 'node',
-                list      : true
+                list: true
             });
         }
         else if (!isNaN(Number(query))) {
             result = this.find({
-                query     : `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
-                params    : { id: Number(query) },
+                query: `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
+                params: { id: Number(query) },
                 identifier: 'node',
-                single    : true
+                single: true
             });
         }
-        else if (Array.isArray(query) && !query.filter( (no) => isNaN(Number(no)) ).length) {
+        else if (Array.isArray(query) && !query.filter((no) => isNaN(Number(no))).length) {
             result = this.find({
-                query     : `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
-                params    : { id: query.map((no) => Number(no)) },
+                query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
+                params: { id: query.map((no) => Number(no)) },
                 identifier: 'node',
-                list      : true
+                list: true
             });
         }
         else if (typeof query === 'string') {
@@ -758,10 +777,10 @@ class Model {
             }
 
             const queryOptions = {
-                query : queryString + ' RETURN node',
+                query: queryString + ' RETURN node',
                 params: query,
                 single: true,
-                list  : !!arrayProps.length
+                list: !!arrayProps.length
             };
             queryOptions.schema = { ['node']: this };
             result = ModelHelper.runQuery(queryOptions);

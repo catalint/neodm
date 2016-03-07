@@ -167,7 +167,7 @@ it('should save relationship hasOne ', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     author: Model.hasOne(User)
                 };
             }
@@ -217,7 +217,7 @@ it('should update relationship hasOne ', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     author: Model.hasOne(User)
                 };
             }
@@ -285,7 +285,7 @@ it('should update relationship hasOne (custom relationship name) ', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     author: Model.hasOne(User, { name: 'has_author' })
                 };
             }
@@ -426,7 +426,7 @@ it('should find directly in array of ids', (done) => {
         const smith = new User(smithData);
         yield smith.save();
 
-        const users = yield User.find( [smith.id, john.id] );
+        const users = yield User.find([smith.id, john.id]);
         expect(users).to.be.an.array();
         expect(users).to.have.length(2);
 
@@ -496,8 +496,8 @@ it('should update relationship hasMany', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
-                    authors : Model.hasMany(User),
+                    title: Joi.string().default('test'),
+                    authors: Model.hasMany(User),
                     comments: Model.hasMany(Comment)
                 };
             }
@@ -567,8 +567,8 @@ it('save model with empty hasMany relationship', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
-                    authors : Model.hasMany(User),
+                    title: Joi.string().default('test'),
+                    authors: Model.hasMany(User),
                     comments: Model.hasMany(Comment)
                 };
             }
@@ -624,8 +624,8 @@ it('should not double set hasOne before save', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
-                    author  : Model.hasOne(User),
+                    title: Joi.string().default('test'),
+                    author: Model.hasOne(User),
                     comments: Model.hasMany(Comment)
                 };
             }
@@ -675,9 +675,9 @@ it('should allow circular reference', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     hasDraft: Model.hasMany(Article),
-                    draftOf : Model.hasOne(Article)
+                    draftOf: Model.hasOne(Article)
                 };
             }
         }
@@ -713,9 +713,9 @@ it('should allow circular reference on validation', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     hasDraft: Model.hasMany(Article),
-                    draftOf : Model.hasOne(Article)
+                    draftOf: Model.hasOne(Article)
                 };
             }
         }
@@ -751,9 +751,9 @@ it('should allow circular and save draft by id', (done) => {
             static [Model.schema]() {
 
                 return {
-                    title   : Joi.string().default('test'),
+                    title: Joi.string().default('test'),
                     hasDraft: Model.hasMany(Article),
-                    draftOf : Model.hasOne(Article)
+                    draftOf: Model.hasOne(Article)
                 };
             }
         }
@@ -789,6 +789,128 @@ it('should allow circular and save draft by id', (done) => {
         articleFromDB.setRelationship('hasDraft', [{ id: draft.id }]);
 
         yield articleFromDB.save();
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should call afterInit', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+            afterInit() {
+
+                this.username = 'inited';
+            }
+
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const dbUser = yield User.find(john.id);
+
+
+        expect(dbUser.username).to.be.equal('inited');
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should call beforeValidate', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string(),
+                    status: Joi.string().required()
+                };
+            }
+
+            beforeValidate() {
+
+                this.status = 'active';
+                return Promise.resolve();
+            }
+
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const dbUser = yield User.find(john.id);
+
+
+        expect(dbUser.status).to.be.equal('active');
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+
+it('should call afterInflate', (done) => {
+
+    Co(function *() {
+
+        class Schedule extends Model {
+
+            static [Model.schema]() {
+
+                return {
+                    timestamp: Joi.number()
+                };
+            }
+        }
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string(),
+                    status: Joi.string().required(),
+                    expires: Model.hasOne(Schedule)
+                };
+            }
+
+            afterInflate(keys) {
+
+                if (keys === undefined || keys.indexOf(keys) !== -1) {
+                    if (this.expires.timestamp < Date.now()) {
+                        this.status = 'expired';
+                    }
+                }
+                return Promise.resolve();
+            }
+
+        }
+
+        const johnData = { username: 'john', status: 'valid', expires: new Schedule({ timestamp: Date.now() }) };
+        const john = new User(johnData);
+        yield john.save();
+
+        const dbUser = yield User.find(john.id);
+
+        yield dbUser.inflate();
+
+        expect(dbUser.status).to.be.equal('expired');
 
         done();
     }).catch((err) => done(err));

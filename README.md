@@ -8,9 +8,12 @@ Usage
 ===
 
 ```js
+
+
 // Config
 const neodm = require('neodm')
-neodm.init({db:'http://localhost:7474',logger:console.log})
+neodm.in
+it({db:'http://localhost:7474',logger:console.log})
 
 
 // Model Declaration
@@ -22,6 +25,20 @@ class Author extends Model{
     return {
         name:Joi.string()
      }
+    }
+
+    afterInit(){
+
+     //no return
+    }
+
+    afterInflate(relationshipKeys){
+
+    return Promise;
+    }
+    beforeValidate(){
+
+    return Promise;
     }
 }
 
