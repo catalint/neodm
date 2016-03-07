@@ -709,6 +709,14 @@ class Model {
                 single    : true
             });
         }
+        else if (Array.isArray(query) && !query.filter( (no) => isNaN(Number(no)) ).length) {
+            result = this.find({
+                query     : `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
+                params    : { id: query.map((no) => Number(no)) },
+                identifier: 'node',
+                list      : true
+            });
+        }
         else if (typeof query === 'string') {
             result = this.find({ query: query, identifier: '$main', singleList: true });
         }
