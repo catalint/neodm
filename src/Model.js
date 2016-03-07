@@ -780,7 +780,7 @@ class Model {
                 query: queryString + ' RETURN node',
                 params: query,
                 single: true,
-                list: !!arrayProps.length
+                list: query.list || !!arrayProps.length
             };
             queryOptions.schema = { ['node']: this };
             result = ModelHelper.runQuery(queryOptions);
