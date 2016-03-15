@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/catalint/neodm.svg?branch=master)](https://travis-ci.org/catalint/neodm) [![Coverage Status](https://coveralls.io/repos/github/catalint/neodm/badge.svg?branch=master)](https://coveralls.io/github/catalint/neodm?branch=master)
+[![Build Status](https://travis-ci.org/catalint/neodm.svg?branch=master)](https://travis-ci.org/catalint/neodm) [![Coverage Status](https://coveralls.io/repos/github/catalint/neodm/badge.svg?branch=master)](https://coveralls.io/github/catalint/neodm?branch=master) [![Dependency Status](https://david-dm.org/catalint/neodm.svg)](https://david-dm.org/catalint/neodm)
 
 
 Neo4j Graph Data Model
