@@ -7,50 +7,129 @@ Neo4j Graph Data Model
 Usage
 ===
 
+Setup
+---
+```js
+const NeoDM = require('neodm');
+NeoDM.db.setDB('http://localhost:7474');
+NeoDM.db.setLogger(console.log);
+```
+
+Model Declaration
+---
+```js
+const Joi = require('joi');
+const Model = NeoDM.Model;
+```
+
+Simple model declaration
+---
+```js
+class User extends Model {
+    static [Model.schema]() {
+
+        return {
+            username: Joi.string()
+        };
+    }
+}
+
+const johnData = { username: 'john' };
+const john = new User(johnData);
+yield john.save();
+```
+
+hasOne relationship
+---
+```js
+class User extends Model {
+    static [Model.schema]() {
+
+        return {
+            username: Joi.string()
+        };
+    }
+
+}
+
+class Article extends Model {
+    static [Model.schema]() {
+
+        return {
+            title: Joi.string().default('test'),
+            author: Model.hasOne(User)
+        };
+    }
+}
+
+const johnData = { username: 'john' };
+const john = new User(johnData);
+yield john.save();
+
+
+const article = new Article({ title: 'hello world', author: john });
+yield article.save();
+
+```
+
+find( {property:value, anotherProp:value} )
+---
 ```js
 
+class User extends Model {
+    static [Model.schema]() {
 
-// Config
-const neodm = require('neodm')
-neodm.in
-it({db:'http://localhost:7474',logger:console.log})
+        return {
+            username: Joi.string()
+        };
+    }
 
+}
 
-// Model Declaration
-const Joi = require('joi')
-const Model = require('neodm').Model
+const johnData = { username: 'john smith' };
+const john = new User(johnData);
+yield john.save();
 
+const johnFromDB = yield User.find({ username: johnData.username });
+```
+
+find( [ id1, id2 ] )
+---
+```js
+const john = new User({ username: 'john' });
+yield john.save();
+
+const smith = new User({ username: 'smith' });
+yield smith.save();
+
+const users = yield User.find([smith.id, john.id]);
+```
+
+Full Model Declaration
+---
+```js
 class Author extends Model{
- static [Model.schema](){
-    return {
-        name:Joi.string()
-     }
+    static [Model.schema](){
+        return {
+            name:Joi.string()
+        }
     }
 
     afterInit(){
-
-     //no return
+   
+        //no return
     }
-
-    afterInflate(relationshipKeys){
-
-    return Promise;
+    
+    afterInflate(inflatedRelationshipKeys){
+    
+        return Promise;
     }
+    
     beforeValidate(){
-
-    return Promise;
+    
+        return Promise;
     }
 }
-
-class Article extends Model{
-   static [Model.schema](){
-    return {
-        title:Joi.string(),
-        author:Model.hasOne(Author)
-    }
-   }
-}
-
 ```
 
 better see the tests
