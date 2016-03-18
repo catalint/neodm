@@ -419,27 +419,6 @@ class Model {
         });
     }
 
-    clone() {
-
-        const self = this;
-        return Co(function *() {
-
-            if (self.id !== undefined) {
-
-                const clone = yield ModelHelper.runRaw({
-                    query: `MATCH (node:${this.getModelName()})
-                                WHERE id(node) = {id}
-                                WITH n as map
-                                CREATE (copy:${this.getModelName()})
-                                SET copy=map return copy`,
-                    params: { id: self.id }
-                });
-
-                console.log(clone);
-            }
-        });
-    }
-
     save(options) {
 
         const self = this;

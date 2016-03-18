@@ -945,3 +945,82 @@ it('should find in array of just 1 element', (done) => {
     }).catch((err) => done(err));
 
 });
+
+it('should find return err', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+        class Comment extends Model {
+            static [Model.schema]() {
+
+                return {
+                    text: Joi.string()
+                };
+            }
+
+        }
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title: Joi.string().default('test'),
+                    author: Model.hasOne(User),
+                    comments: Model.hasMany(Comment)
+                };
+            }
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+
+        const article = new Article({ title: 'hello world', author: john });
+
+        yield article.save();
+
+        yield NeoDM.db.query({
+            query: 'MATCH (from:Article),(to:User) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:User]->(to) RETURN rel',
+            params: {
+                from: article.id,
+                to: smith.id
+            }
+        });
+
+        const dbArticle = yield Article.find(article.id);
+
+        let thrown = true;
+        try {
+            yield dbArticle.inflate();
+            thrown = false;
+        }
+        catch (err) {
+            expect(err.message).to.contain('Unexpected relationship has more than 1 result');
+            expect(err.message).to.contain(`id:${article.id}`);
+            expect(err.message).to.contain('model:"Article"');
+            expect(err.message).to.contain('"key":"author"');
+
+            done();
+        }
+
+        if (!thrown) {
+            throw new Error('expected error');
+        }
+
+
+    }).catch((err) => done(err));
+});
