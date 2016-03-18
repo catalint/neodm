@@ -14,6 +14,7 @@ const HasOneRelationship = require('./Relationship').HasOneRelationship;
 
 const relationshipsKey = Symbol('addRelationships');
 const schemaValidation = Symbol('schemaValidation');
+const duplicateRelNamesValidation = Symbol('duplicateRelNamesValidation');
 
 class Model {
 
@@ -419,13 +420,56 @@ class Model {
         });
     }
 
+    static _detectDuplicateRelNames() {
+
+        const self = this;
+
+        let duplicateRelNames;
+        if (self[duplicateRelNamesValidation]) {
+            duplicateRelNames = self[duplicateRelNamesValidation];
+        }
+        else {
+            const schema = self.getSchema();
+            const relationshipKeys = Object.getOwnPropertyNames(schema).filter((key) => {
+
+                return (schema[key] instanceof Relationship);
+            });
+
+            const relNames = relationshipKeys.map((key) => {
+
+                return { relName: schema[key].relName, key: key };
+            });
+
+            duplicateRelNames = [];
+            for (const rel of relNames) {
+                let found = 0;
+                for (const relDup of relNames) {
+                    if (relDup.relName === rel.relName) {
+                        ++found;
+                    }
+                }
+                if (found > 1) {
+                    duplicateRelNames.push(JSON.stringify(rel));
+                }
+            }
+            self[duplicateRelNamesValidation] = duplicateRelNames;
+        }
+
+        if (duplicateRelNames.length) {
+            throw new Error(`Relationships names of model ${self.getModelName()} are not unique ${duplicateRelNames.join(',')}`);
+        }
+    }
+
     save(options) {
 
         const self = this;
+
         if (self.id !== undefined && Object.getOwnPropertyNames(self[newDataKey]).length === 0 && self[relationshipsKey].length === 0) {
             return Promise.resolve(self);
         }
         const saveData = function *() {
+
+            self.getModel()._detectDuplicateRelNames();
 
             yield self.beforeValidate();
             let id = self.id;
@@ -439,6 +483,7 @@ class Model {
 
                 return (schema[key] instanceof Relationship);
             });
+
 
             const validatedProps = yield self.validateProps();
 

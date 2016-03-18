@@ -73,9 +73,15 @@ it('should use sent logger', (done) => {
 
     }
 
-    const johnData = { username: 'john' };
-    const john = new User(johnData);
-    john.save();
+    Co(function *() {
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+    }).catch((err) => done(err));
+
+
 });
 
 it('should define a new model with no properties', (done) => {
@@ -676,8 +682,8 @@ it('should allow circular reference', (done) => {
 
                 return {
                     title: Joi.string().default('test'),
-                    hasDraft: Model.hasMany(Article),
-                    draftOf: Model.hasOne(Article)
+                    hasDraft: Model.hasMany(Article, { name: 'hasDraft' }),
+                    draftOf: Model.hasOne(Article, { name: 'draftOf' })
                 };
             }
         }
@@ -714,8 +720,8 @@ it('should allow circular reference on validation', (done) => {
 
                 return {
                     title: Joi.string().default('test'),
-                    hasDraft: Model.hasMany(Article),
-                    draftOf: Model.hasOne(Article)
+                    hasDraft: Model.hasMany(Article, { name: 'hasDraft' }),
+                    draftOf: Model.hasOne(Article, { name: 'draftOf' })
                 };
             }
         }
@@ -752,8 +758,8 @@ it('should allow circular and save draft by id', (done) => {
 
                 return {
                     title: Joi.string().default('test'),
-                    hasDraft: Model.hasMany(Article),
-                    draftOf: Model.hasOne(Article)
+                    hasDraft: Model.hasMany(Article, { name: 'hasDraft' }),
+                    draftOf: Model.hasOne(Article, { name: 'draftOf' })
                 };
             }
         }
@@ -1003,10 +1009,9 @@ it('should find return err', (done) => {
 
         const dbArticle = yield Article.find(article.id);
 
-        let thrown = true;
         try {
             yield dbArticle.inflate();
-            thrown = false;
+            done(new Error('expected error'));
         }
         catch (err) {
             expect(err.message).to.contain('Unexpected relationship has more than 1 result');
@@ -1017,8 +1022,71 @@ it('should find return err', (done) => {
             done();
         }
 
-        if (!thrown) {
-            throw new Error('expected error');
+
+    }).catch((err) => done(err));
+});
+
+
+it('should not allow duplicate relName', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string()
+                };
+            }
+
+        }
+        class Comment extends Model {
+            static [Model.schema]() {
+
+                return {
+                    text: Joi.string()
+                };
+            }
+
+        }
+
+        class Article extends Model {
+            static [Model.schema]() {
+
+                return {
+                    title: Joi.string().default('test'),
+                    editedBy: Model.hasOne(User),
+                    authors: Model.hasMany(User),
+                    comments: Model.hasMany(Comment)
+                };
+            }
+        }
+
+        const johnData = { username: 'john' };
+        const john = new User(johnData);
+        yield john.save();
+
+        const smithData = { username: 'smith' };
+        const smith = new User(smithData);
+        yield smith.save();
+
+
+        const article = new Article({ title: 'hello world', editedBy: smith, authors: [john, smith] });
+
+        try {
+            yield article.save();
+
+            const dbArticle = yield Article.find(article.id);
+
+            yield dbArticle.inflate();
+            done(new Error('expected error'));
+        }
+        catch (err) {
+            expect(err.message).to.contain('Relationships names of model Article are not unique');
+            expect(err.message).to.contain('{"relName":"User","key":"editedBy"}');
+            expect(err.message).to.contain('{"relName":"User","key":"authors"}');
+
+            done();
         }
 
 
