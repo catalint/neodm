@@ -204,6 +204,58 @@ it('should save relationship hasOne ', (done) => {
 
 });
 
+it('should add object declared with alternatives ', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string(),
+                    test: Joi.alternatives([Joi.number(), Joi.string()])
+                };
+            }
+
+        }
+
+        const johnData = { username: 'john', test: 123 };
+        const john = new User(johnData);
+        yield john.save();
+
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
+it('should add object declared with when ', (done) => {
+
+    Co(function *() {
+
+        class User extends Model {
+            static [Model.schema]() {
+
+                return {
+                    username: Joi.string(),
+                    test: Joi.when('username', {
+                        is: 'john', then: Joi.boolean().required()
+                    })
+                };
+            }
+
+        }
+
+        const johnData = { username: 'john', test: true };
+        const john = new User(johnData);
+        yield john.save();
+
+
+        done();
+    }).catch((err) => done(err));
+
+});
+
 
 it('should update relationship hasOne ', (done) => {
 

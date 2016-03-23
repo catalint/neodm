@@ -359,10 +359,12 @@ class Model {
         if (node instanceof Neo4j.Node) {
             objNode = node;
             for (const key of propertyKeys) {
-                if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object') && objNode.properties[key] !== undefined) {
+
+                const type = schema[key].describe().type;
+                if (['any', 'alternatives', 'object'].indexOf(type) !== -1 && objNode.properties[key] !== undefined) {
                     objNode.properties[key] = JSON.parse(objNode.properties[key]);
                 }
-                else if ((schema[key].describe().type === 'array' ) && objNode.properties[key] !== undefined) {
+                else if (type === 'array' && objNode.properties[key] !== undefined) {
 
                     const allNumbers = objNode.properties[key].every((property) => !isNaN(Number(property)));
 
@@ -496,10 +498,17 @@ class Model {
                 }
                 if (self[newDataKey].hasOwnProperty(key)) {
 
-                    if ((schema[key].describe().type === 'any' || schema[key].describe().type === 'object')) {
+                    let type;
+                    try {
+                        type = schema[key].describe().type;
+                    }
+                    catch (err) {
+                        throw `${key} for model ${self.getModelName()} is not defined with Joi`;
+                    }
+                    if (['any', 'alternatives', 'object'].indexOf(type) !== -1) {
                         setProperties[key] = JSON.stringify(self[newDataKey][key]);
                     }
-                    else if ((schema[key].describe().type === 'array' )) {
+                    else if (type === 'array') {
                         const allNumbers = self[newDataKey][key].every((property) => !isNaN(Number(property)));
                         const allStrings = self[newDataKey][key].every((property) => typeof property === 'string');
 
@@ -583,7 +592,7 @@ class Model {
 
                 if (rel.action === 'add') {
                     query = {
-                        query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
+                        query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} MERGE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
                         params: {
                             from: self.id,
                             to: idTo
