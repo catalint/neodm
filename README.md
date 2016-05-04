@@ -8,7 +8,7 @@ Also works with new bolt driver
 
 Changes
 ===
-v3 no longer relies on neo4j id's and sets own `id` property if not set in model declaration
+breaking: v3 no longer relies on neo4j id's and sets own `id` property if not set in model declaration
 
 Usage
 ===
