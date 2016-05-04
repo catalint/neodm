@@ -2,7 +2,6 @@
 
 const HasOneRelationship = require('./Relationship').HasOneRelationship;
 const HasManyRelationship = require('./Relationship').HasManyRelationship;
-const Neo4j = require('neo4j');
 const Co = require('co');
 const Db = require('./db');
 const mainNode = require('./constants').mainNode;
@@ -92,7 +91,7 @@ class ModelHelper {
 
             const cypherQuery = {
                 query: `MATCH (${mainNode}:${from.getModelName()}) WHERE id(${mainNode}) = {id} ${optionalMatches.join('\n')} RETURN ${cypherReturns.join(', ')}`,
-                params: { id: from.id }
+                params: { id: Db.toInt(from.id) }
             };
 
             const results = yield Db.query(cypherQuery);
@@ -153,7 +152,7 @@ class ModelHelper {
             return results.map((result) => {
 
                 for (const key in result) {
-                    if (result[key] instanceof Neo4j.Node) {
+                    if (Model._isDataFromDB(result[key])) {
                         let model = Model;
                         if (resultSchema[key] && resultSchema[key].prototype instanceof Model) {
                             model = resultSchema[key];

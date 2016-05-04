@@ -1,6 +1,6 @@
 {
   "name": "neodm",
-  "version": "1.4.7",
+  "version": "3.0.0",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
@@ -31,13 +31,13 @@
   "dependencies": {
     "co": "^4.6.0",
     "hoek": "^3.0.4",
-    "joi": "^8.0.3",
-    "neo4j": "^2.0.0-RC2"
+    "joi": "^8.0.5",
+    "neo4j": "^2.0.0-RC2",
+    "neodb": "^1.2.3"
   },
   "devDependencies": {
     "code": "^2.1.0",
     "coveralls": "^2.11.8",
-    "lab": "^10.1.0",
-    "neodb": "^1.1.13"
+    "lab": "^10.4.0"
   }
 }

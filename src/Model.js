@@ -2,8 +2,8 @@
 
 const Co = require('co');
 const Joi = require('joi');
-const Neo4j = require('neo4j');
 const Hoek = require('hoek');
+const Db = require('./db');
 const ModelHelper = require('./ModelHelper');
 const schemaKey = require('./constants').getSchemaKey;
 const nodeKey = require('./constants').nodeKey;
@@ -106,7 +106,7 @@ class Model {
         });
 
 
-        if (node !== null && node !== undefined && typeof node === 'object' && !(node instanceof Neo4j.Node)) {
+        if (node !== null && node !== undefined && typeof node === 'object' && !Model._isDataFromDB(node)) {
             this.set(node);
         }
 
@@ -341,6 +341,11 @@ class Model {
 
     }
 
+    static _isDataFromDB(node) {
+
+        return typeof node === 'object' && node.hasOwnProperty('_id') && node.hasOwnProperty('properties');
+    }
+
     _setNewNodeData(node) {
 
         const schema = this.getSchema();
@@ -356,7 +361,7 @@ class Model {
         };
 
         this[newDataKey] = {};
-        if (node instanceof Neo4j.Node) {
+        if (Model._isDataFromDB(node)) {
             objNode = node;
             for (const key of propertyKeys) {
 
@@ -417,7 +422,7 @@ class Model {
             }
             return yield ModelHelper.runRaw({
                 query: `MATCH (node:${self.getModelName()}) WHERE id(node) = {id} REMOVE node:${self.getModelName()} SET node:_${self.getModelName()} RETURN node;`,
-                params: { id: self.id }
+                params: { id: Db.toInt(self.id) }
             });
         });
     }
@@ -542,7 +547,7 @@ class Model {
             else {
                 cypherNode = {
                     query: `MATCH (node:${self.getModelName()}) WHERE id(node)={id} SET node+={props} return node`,
-                    params: { id: id, props: setProperties }
+                    params: { id: Db.toInt(id), props: setProperties }
                 };
             }
             if (Object.getOwnPropertyNames(setProperties).length > 0 || id === undefined) {
@@ -594,8 +599,8 @@ class Model {
                     query = {
                         query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} MERGE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
                         params: {
-                            from: self.id,
-                            to: idTo
+                            from: Db.toInt(self.id),
+                            to: Db.toInt(idTo)
                         }
                     };
                 }
@@ -604,8 +609,8 @@ class Model {
                         query = {
                             query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} DELETE rel`,
                             params: {
-                                from: self.id,
-                                to: rel.to
+                                from: Db.toInt(self.id),
+                                to: Db.toInt(rel.to)
                             }
                         };
                     }
@@ -613,7 +618,7 @@ class Model {
                         query = {
                             query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(:${rel.rel.to.getModelName()}) WHERE id(from) = {from} DELETE rel`,
                             params: {
-                                from: self.id
+                                from: Db.toInt(self.id)
                             }
                         };
                     }
@@ -687,7 +692,7 @@ class Model {
         if (relationshipKeys !== undefined && !Array.isArray(relationshipKeys)) {
             relationshipKeys = [relationshipKeys];
         }
-        if (!self.id) {
+        if (self.id === undefined) {
             return Promise.reject('Model must be saved in db to get relationships');
         }
         return Co(function*() {
@@ -775,7 +780,7 @@ class Model {
         else if (Array.isArray(query) && !(query.filter((no) => isNaN(Number(no)))).length) {
             result = this.find({
                 query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
-                params: { id: query.map((no) => Number(no)) },
+                params: { id: query.map((no) => Db.toInt(Number(no))) },
                 identifier: 'node',
                 list: true
             });
@@ -783,7 +788,7 @@ class Model {
         else if (!isNaN(Number(query))) {
             result = this.find({
                 query: `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
-                params: { id: Number(query) },
+                params: { id: Db.toInt(Number(query)) },
                 identifier: 'node',
                 single: true
             });
@@ -818,6 +823,15 @@ class Model {
                 }
                 return propResult;
             });
+
+            if (query.hasOwnProperty('id')) {
+                if (Array.isArray(query.id)) {
+                    query.id = query.id.map((id) => Db.toInt(id));
+                }
+                else {
+                    query.id = Db.toInt(query.id);
+                }
+            }
 
             let queryString = `MATCH (node:${this.getModelName()}`;
             if (props.length) {

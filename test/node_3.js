@@ -17,9 +17,9 @@ const expect = Code.expect;
 const NeoDM = require('../src');
 const Model = NeoDM.Model;
 
-const db = new NeoDB(6363);
+const db = new NeoDB(6363, '3.0.0', 6364);
 
-describe('node 2', () => {
+describe('node 3', () => {
 
     before((done) => {
 
@@ -27,7 +27,7 @@ describe('node 2', () => {
             .start()
             .then((data) => {
 
-                NeoDM.db.setDB(data.url);
+                NeoDM.db.setDB(data.boltURL);
                 done();
             })
             .catch((err) => done(err));
@@ -1055,8 +1055,8 @@ describe('node 2', () => {
             yield NeoDM.db.query({
                 query: 'MATCH (from:Article),(to:User) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:User]->(to) RETURN rel',
                 params: {
-                    from: article.id,
-                    to: smith.id
+                    from: NeoDM.db.toInt(article.id),
+                    to: NeoDM.db.toInt(smith.id)
                 }
             });
 
