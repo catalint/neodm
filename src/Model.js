@@ -3,7 +3,6 @@
 const Co = require('co');
 const Joi = require('joi');
 const Hoek = require('hoek');
-const Db = require('./db');
 const ModelHelper = require('./ModelHelper');
 const schemaKey = require('./constants').getSchemaKey;
 const nodeKey = require('./constants').nodeKey;
@@ -11,10 +10,12 @@ const newDataKey = require('./constants').newDataKey;
 const Relationship = require('./Relationship').Relationship;
 const HasManyRelationship = require('./Relationship').HasManyRelationship;
 const HasOneRelationship = require('./Relationship').HasOneRelationship;
+const ShortID = require('shortid');
 
-const relationshipsKey = Symbol('addRelationships');
-const schemaValidation = Symbol('schemaValidation');
-const duplicateRelNamesValidation = Symbol('duplicateRelNamesValidation');
+const relationshipsKey = require('./constants').relationshipsKey;
+const schemaValidation = require('./constants').schemaValidation;
+const duplicateRelNamesValidation = require('./constants').duplicateRelNamesValidation;
+const NEO_ID = require('./constants').NEO_ID;
 
 class Model {
 
@@ -36,10 +37,6 @@ class Model {
         this._setNewNodeData(node);
 
         propertyKeys.forEach((key) => {
-
-            if (key === 'id') {
-                return;
-            }
 
             Object.defineProperty(this, key, {
                 configurable: false,
@@ -147,7 +144,7 @@ class Model {
 
         if (data !== null && typeof data === 'object') {
             for (const key of propertyKeys) {
-                if (data.hasOwnProperty(key) && key !== 'id') {
+                if (data.hasOwnProperty(key)) {
                     this[key] = data[key];
                 }
             }
@@ -182,10 +179,10 @@ class Model {
                 delete schema[propName];
             }
             else if (schema[propName] instanceof Model.hasOne().constructor) {
-                schema[propName] = Joi.alternatives().try(schema[propName].to.validator(), Joi.number());
+                schema[propName] = Joi.alternatives().try(schema[propName].to.validator(), Joi.number(), Joi.string());
             }
             else if (schema[propName] instanceof Model.hasMany().constructor) {
-                schema[propName] = Joi.array().items([schema[propName].to.validator(), Joi.number()]);
+                schema[propName] = Joi.array().items([schema[propName].to.validator(), Joi.number(), Joi.string()]);
             }
         });
 
@@ -195,14 +192,14 @@ class Model {
             if (ownSingleRefs.length) {
                 const refKeys = {};
                 for (const propName of ownSingleRefs) {
-                    refKeys[propName] = Joi.alternatives().try(joiSchema, Joi.number());
+                    refKeys[propName] = Joi.alternatives().try(joiSchema, Joi.number(), Joi.string());
                 }
                 joiSchema = joiSchema.keys(refKeys);
             }
             if (ownManyRefs.length) {
                 const refKeys = {};
                 for (const propName of ownManyRefs) {
-                    refKeys[propName] = Joi.array().items([joiSchema, Joi.number()]);
+                    refKeys[propName] = Joi.array().items([joiSchema, Joi.number(), Joi.string()]);
                 }
                 joiSchema = joiSchema.keys(refKeys);
             }
@@ -314,7 +311,7 @@ class Model {
 
                     let result;
                     if (rel instanceof Model) {
-                        result = rel.id !== id;
+                        result = ModelHelper.getID((rel)) !== id;
                     }
                     else {
                         result = rel !== id;
@@ -332,7 +329,7 @@ class Model {
     _setId(id) {
 
         this[nodeKey]._id = id;
-        Object.defineProperty(this, 'id', {
+        Object.defineProperty(this, NEO_ID, {
             configurable: true,
             enumerable: true,
             value: this[nodeKey]._id,
@@ -404,6 +401,7 @@ class Model {
 
             const res = self.getModel().validator().validate(self);
             if (res.error) {
+                console.error(res);
                 reject(res.error);
             }
             else {
@@ -417,12 +415,12 @@ class Model {
         const self = this;
         return Co(function *() {
 
-            if (self.id === undefined) {
+            if (self[NEO_ID] === undefined) {
                 throw new Error('NOT_FOUND');
             }
             return yield ModelHelper.runRaw({
                 query: `MATCH (node:${self.getModelName()}) WHERE id(node) = {id} REMOVE node:${self.getModelName()} SET node:_${self.getModelName()} RETURN node;`,
-                params: { id: Db.toInt(self.id) }
+                params: { id: self[NEO_ID] }
             });
         });
     }
@@ -471,7 +469,7 @@ class Model {
 
         const self = this;
 
-        if (self.id !== undefined && Object.getOwnPropertyNames(self[newDataKey]).length === 0 && self[relationshipsKey].length === 0) {
+        if (self[NEO_ID] !== undefined && Object.getOwnPropertyNames(self[newDataKey]).length === 0 && self[relationshipsKey].length === 0) {
             return Promise.resolve(self);
         }
         const saveData = function *() {
@@ -479,7 +477,7 @@ class Model {
             self.getModel()._detectDuplicateRelNames();
 
             yield self.beforeValidate();
-            let id = self.id;
+            let id = self[NEO_ID];
             const schema = self.getSchema();
             const propertyKeys = Object.getOwnPropertyNames(schema).filter((key) => {
 
@@ -498,7 +496,7 @@ class Model {
 
             propertyKeys.forEach((key) => {
 
-                if (validatedProps[key] !== undefined && key !== 'id') {
+                if (validatedProps[key] !== undefined) {
                     self[key] = validatedProps[key];
                 }
                 if (self[newDataKey].hasOwnProperty(key)) {
@@ -547,7 +545,7 @@ class Model {
             else {
                 cypherNode = {
                     query: `MATCH (node:${self.getModelName()}) WHERE id(node)={id} SET node+={props} return node`,
-                    params: { id: Db.toInt(id), props: setProperties }
+                    params: { id: id, props: setProperties }
                 };
             }
             if (Object.getOwnPropertyNames(setProperties).length > 0 || id === undefined) {
@@ -559,10 +557,10 @@ class Model {
                 });
 
                 if (id === undefined) {
-                    id = dbNode.id;
+                    id = dbNode[NEO_ID];
                     self[nodeKey].properties = dbNode[nodeKey].properties;
                     self[newDataKey] = {};
-                    self._setId(dbNode.id);
+                    self._setId(id);
                 }
             }
 
@@ -581,7 +579,7 @@ class Model {
 
 
             for (const rel of self[relationshipsKey]) {// save relationships
-                if (rel.action === 'add' && rel.to instanceof rel.rel.to && rel.to.id === undefined) {
+                if (rel.action === 'add' && rel.to instanceof rel.rel.to && rel.to[NEO_ID] === undefined) {
                     yield rel.to.save();
                 }
             }
@@ -597,28 +595,28 @@ class Model {
 
                 if (rel.action === 'add') {
                     query = {
-                        query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} MERGE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
+                        query: `MATCH (from:${self.getModelName()}),(to:${rel.rel.to.getModelName()}) WHERE from.id = {from} AND to.id = {to} MERGE (from)-[rel:${rel.rel.relName}]->(to) RETURN rel`,
                         params: {
-                            from: Db.toInt(self.id),
-                            to: Db.toInt(idTo)
+                            from: self.id,
+                            to: idTo
                         }
                     };
                 }
                 else if (rel.action === 'delete') {
                     if (idTo !== undefined) {
                         query = {
-                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(to:${rel.rel.to.getModelName()}) WHERE id(from) = {from} AND id(to) = {to} DELETE rel`,
+                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(to:${rel.rel.to.getModelName()}) WHERE from.id = {from} AND to.id = {to} DELETE rel`,
                             params: {
-                                from: Db.toInt(self.id),
-                                to: Db.toInt(rel.to)
+                                from: self.id,
+                                to: rel.to
                             }
                         };
                     }
                     else {
                         query = {
-                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(:${rel.rel.to.getModelName()}) WHERE id(from) = {from} DELETE rel`,
+                            query: `MATCH (from:${self.getModelName()})-[rel:${rel.rel.relName}]->(:${rel.rel.to.getModelName()}) WHERE from.id = {from} DELETE rel`,
                             params: {
-                                from: Db.toInt(self.id)
+                                from: self.id
                             }
                         };
                     }
@@ -692,7 +690,7 @@ class Model {
         if (relationshipKeys !== undefined && !Array.isArray(relationshipKeys)) {
             relationshipKeys = [relationshipKeys];
         }
-        if (self.id === undefined) {
+        if (self[NEO_ID] === undefined) {
             return Promise.reject('Model must be saved in db to get relationships');
         }
         return Co(function*() {
@@ -710,7 +708,7 @@ class Model {
 
         const schema = this.getModel()[schemaKey]();
         if (schema.id === undefined) {
-            schema.id = Joi.number().label(`${this.getModelName()} ID`);
+            schema.id = Joi.string().default(() => ShortID.generate(), 'ID').label(`${this.getModelName()} ID`);
         }
         return schema;
     }
@@ -719,7 +717,7 @@ class Model {
 
         const schema = this.getModel()[schemaKey]();
         if (schema.id === undefined) {
-            schema.id = Joi.number().label(`${this.getModelName()} ID`);
+            schema.id = Joi.string().default(() => ShortID.generate(), 'ID').label(`${this.getModelName()} ID`);
         }
         return schema;
     }
@@ -777,18 +775,18 @@ class Model {
                 list: true
             });
         }
-        else if (Array.isArray(query) && !(query.filter((no) => isNaN(Number(no)))).length) {
+        else if (Array.isArray(query)) {
             result = this.find({
-                query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
-                params: { id: query.map((no) => Db.toInt(no)) },
+                query: `MATCH (node:${this.getModelName()}) WHERE node.id IN {id} RETURN node`,
+                params: { id: query },
                 identifier: 'node',
                 list: true
             });
         }
-        else if (!isNaN(Number(query))) {
+        else if (typeof query === 'string' && query.indexOf(' ') === -1) {
             result = this.find({
-                query: `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
-                params: { id: Db.toInt(query) },
+                query: `MATCH (node:${this.getModelName()}) WHERE node.id = {id} RETURN node`,
+                params: { id: query },
                 identifier: 'node',
                 single: true
             });
@@ -812,26 +810,8 @@ class Model {
 
                 return `${key}:{${key}}`;
             });
-            const arrayProps = arrayKeys.map((key) => {
+            const arrayProps = arrayKeys.map((key) => ` node.${key} IN {${key}} `);
 
-                let propResult;
-                if (key === 'id') {
-                    propResult = ` id(node) IN {${key}} `;
-                }
-                else {
-                    propResult = ` node.${key} IN {${key}} `;
-                }
-                return propResult;
-            });
-
-            if (query.hasOwnProperty('id')) {
-                if (Array.isArray(query.id)) {
-                    query.id = query.id.map((id) => Db.toInt(id));
-                }
-                else {
-                    query.id = Db.toInt(query.id);
-                }
-            }
 
             let queryString = `MATCH (node:${this.getModelName()}`;
             if (props.length) {

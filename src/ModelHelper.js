@@ -5,6 +5,7 @@ const HasManyRelationship = require('./Relationship').HasManyRelationship;
 const Co = require('co');
 const Db = require('./db');
 const mainNode = require('./constants').mainNode;
+const NEO_ID = require('./constants').NEO_ID;
 
 
 class ModelHelper {
@@ -18,12 +19,11 @@ class ModelHelper {
 
     static getID(model) {
 
-        if (!isNaN(Number(model))) {
-            return Number(model);
-        }
-        else if (typeof model === 'object') {
+        if (typeof model === 'object') {
             return ModelHelper.getID(model.id);
         }
+
+        return model;
     }
 
     static runQuery(options) {
@@ -91,7 +91,7 @@ class ModelHelper {
 
             const cypherQuery = {
                 query: `MATCH (${mainNode}:${from.getModelName()}) WHERE id(${mainNode}) = {id} ${optionalMatches.join('\n')} RETURN ${cypherReturns.join(', ')}`,
-                params: { id: Db.toInt(from.id) }
+                params: { id: Db.toInt(from[NEO_ID]) }
             };
 
             const results = yield Db.query(cypherQuery);
@@ -109,7 +109,7 @@ class ModelHelper {
                         const cur = results[i];
                         const prev = results[i - 1];
                         if (JSON.stringify(prev[rel.key]) !== JSON.stringify(cur[rel.key])) {
-                            throw new Error(`Unexpected relationship has more than 1 result id:${from.id} model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)}`);
+                            throw new Error(`Unexpected relationship has more than 1 result id:${from[NEO_ID]} model:${JSON.stringify(from.getModelName())} rel:${JSON.stringify(rel)}`);
                         }
                     }
                 });

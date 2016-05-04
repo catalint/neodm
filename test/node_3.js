@@ -6,6 +6,7 @@ const Lab = require('lab');
 const lab = exports.lab = Lab.script();
 const Co = require('co');
 const Joi = require('joi');
+const NEO_ID = require('../src/constants').NEO_ID;
 
 const describe = lab.describe;
 const it = lab.it;
@@ -1055,8 +1056,8 @@ describe('node 3', () => {
             yield NeoDM.db.query({
                 query: 'MATCH (from:Article),(to:User) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:User]->(to) RETURN rel',
                 params: {
-                    from: NeoDM.db.toInt(article.id),
-                    to: NeoDM.db.toInt(smith.id)
+                    from: NeoDM.db.toInt(article[NEO_ID]),
+                    to: NeoDM.db.toInt(smith[NEO_ID])
                 }
             });
 
@@ -1068,7 +1069,7 @@ describe('node 3', () => {
             }
             catch (err) {
                 expect(err.message).to.contain('Unexpected relationship has more than 1 result');
-                expect(err.message).to.contain(`id:${article.id}`);
+                expect(err.message).to.contain(`id:${article[NEO_ID]}`);
                 expect(err.message).to.contain('model:"Article"');
                 expect(err.message).to.contain('"key":"author"');
 

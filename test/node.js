@@ -16,6 +16,7 @@ const expect = Code.expect;
 
 const NeoDM = require('../src');
 const Model = NeoDM.Model;
+const NEO_ID = require('../src/constants').NEO_ID;
 
 const db = new NeoDB(6363);
 
@@ -1053,7 +1054,7 @@ describe('node 2', () => {
             yield article.save();
 
             yield NeoDM.db.query({
-                query: 'MATCH (from:Article),(to:User) WHERE id(from) = {from} AND id(to) = {to} CREATE (from)-[rel:User]->(to) RETURN rel',
+                query: 'MATCH (from:Article),(to:User) WHERE from.id = {from} AND to.id = {to} CREATE (from)-[rel:User]->(to) RETURN rel',
                 params: {
                     from: article.id,
                     to: smith.id
@@ -1068,7 +1069,7 @@ describe('node 2', () => {
             }
             catch (err) {
                 expect(err.message).to.contain('Unexpected relationship has more than 1 result');
-                expect(err.message).to.contain(`id:${article.id}`);
+                expect(err.message).to.contain(`id:${article[NEO_ID]}`);
                 expect(err.message).to.contain('model:"Article"');
                 expect(err.message).to.contain('"key":"author"');
 
