@@ -41,7 +41,7 @@ const queryDB = (query) => {
                         data[key] = record._fields[index];
 
                         if (data[key] && data[key].hasOwnProperty('identity')) {
-                            data[key]._id = data[key].identity.toNumber();
+                            data[key]._id = data[key].identity;
                         }
 
                         if (Array.isArray(data[key])) {
@@ -49,7 +49,7 @@ const queryDB = (query) => {
                             data[key] = data[key].map((value) => {
 
                                 if (value.hasOwnProperty('identity')) {
-                                    value._id = value.identity.toNumber();
+                                    value._id = value.identity;
                                 }
                                 return value;
                             });
