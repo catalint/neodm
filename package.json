@@ -1,6 +1,6 @@
 {
   "name": "neodm",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
@@ -30,14 +30,15 @@
   "homepage": "https://github.com/catalint/neodm#readme",
   "dependencies": {
     "co": "^4.6.0",
-    "hoek": "^3.0.4",
+    "hoek": "^4.0.0",
     "joi": "^8.0.5",
     "neo4j": "^2.0.0-RC2",
+    "neo4j-driver": "^1.0.0",
     "neodb": "^1.2.3"
   },
   "devDependencies": {
-    "code": "^2.1.0",
-    "coveralls": "^2.11.8",
+    "code": "^2.2.1",
+    "coveralls": "^2.11.9",
     "lab": "^10.4.0"
   }
 }
