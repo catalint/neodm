@@ -12,6 +12,9 @@ const toInt = (number) => {
     if (isBolt) {
         number = Neo4jDriver.int(number);
     }
+    else {
+        number = Number(number);
+    }
     return number;
 };
 

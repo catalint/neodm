@@ -780,7 +780,7 @@ class Model {
         else if (Array.isArray(query) && !(query.filter((no) => isNaN(Number(no)))).length) {
             result = this.find({
                 query: `MATCH (node:${this.getModelName()}) WHERE id(node) IN {id} RETURN node`,
-                params: { id: query.map((no) => Db.toInt(Number(no))) },
+                params: { id: query.map((no) => Db.toInt(no)) },
                 identifier: 'node',
                 list: true
             });
@@ -788,7 +788,7 @@ class Model {
         else if (!isNaN(Number(query))) {
             result = this.find({
                 query: `MATCH (node:${this.getModelName()}) WHERE id(node) = {id} RETURN node`,
-                params: { id: Db.toInt(Number(query)) },
+                params: { id: Db.toInt(query) },
                 identifier: 'node',
                 single: true
             });
