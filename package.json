@@ -34,7 +34,7 @@
     "joi": "^8.0.5",
     "neo4j": "^2.0.0-RC2",
     "neo4j-driver": "^1.0.0",
-    "neodb": "^1.2.3",
+    "neodb": "^1.2.4",
     "shortid": "^2.2.6"
   },
   "devDependencies": {
