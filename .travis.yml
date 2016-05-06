@@ -8,5 +8,3 @@ node_js:
 
 after_success:
 - npm run report-cov
-
-sudo: false
