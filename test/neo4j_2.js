@@ -20,7 +20,7 @@ const NEO_ID = require('../src/constants').NEO_ID;
 
 const db = new NeoDB(6363);
 
-describe('node 2', () => {
+describe('http rest driver', () => {
 
     before((done) => {
 

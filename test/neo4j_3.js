@@ -20,7 +20,7 @@ const Model = NeoDM.Model;
 
 const db = new NeoDB(6363, '3.0.0', 6364);
 
-describe('node 3', () => {
+describe('bolt driver', () => {
 
     before((done) => {
 
