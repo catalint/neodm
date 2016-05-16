@@ -399,7 +399,7 @@ class Model {
         const self = this;
         return new Promise((resolve, reject) => {
 
-            const res = self.getModel().validator().validate(self);
+            const res = self.getModel().validator().validate(self, { abortEarly: false });
             if (res.error) {
                 console.error(res);
                 reject(res.error);
