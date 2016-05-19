@@ -140,4 +140,4 @@ class Author extends Model{
 
 better see the tests
 
--signed gpg
+-signed gpg 2
