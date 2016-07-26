@@ -38,7 +38,7 @@
     "shortid": "^2.2.6"
   },
   "devDependencies": {
-    "code": "^2.2.1",
+    "code": "^3.0.0",
     "coveralls": "^2.11.9",
     "lab": "^10.4.0"
   }
