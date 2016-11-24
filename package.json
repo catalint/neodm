@@ -40,6 +40,6 @@
   "devDependencies": {
     "code": "^4.0.0",
     "coveralls": "^2.11.9",
-    "lab": "^10.4.0"
+    "lab": "^10.6.0"
   }
 }
