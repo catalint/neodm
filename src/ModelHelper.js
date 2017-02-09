@@ -145,9 +145,7 @@ class ModelHelper {
         resultSchema = resultSchema || {};
         return Co(function*() {
 
-            const results = yield Db.query({
-                query: query
-            });
+            const results = yield Db.query({ query });
 
             return results.map((result) => {
 

@@ -75,7 +75,7 @@ const queryDB = (query) => {
 
 module.exports = {
     query: queryDB,
-    toInt: toInt,
+    toInt,
     setLogger(loggerFunction){
 
         logger = loggerFunction;
