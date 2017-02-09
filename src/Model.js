@@ -16,6 +16,7 @@ const relationshipsKey = require('./constants').relationshipsKey;
 const schemaValidation = require('./constants').schemaValidation;
 const duplicateRelNamesValidation = require('./constants').duplicateRelNamesValidation;
 const NEO_ID = require('./constants').NEO_ID;
+const mainNodeKey = require('./constants').mainNode;
 
 class Model {
 
@@ -792,7 +793,7 @@ class Model {
             });
         }
         else if (typeof query === 'string') {
-            result = this.find({ query: query, identifier: '$main', singleList: true });
+            result = this.find({ query: query, identifier: mainNodeKey, singleList: true });
         }
         else if (query.query !== undefined) {
             const queryOptions = { query: query.query, params: query.params, single: query.single, list: query.list };
