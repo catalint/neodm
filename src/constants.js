@@ -5,7 +5,7 @@ module.exports = {
     nodeKey: Symbol('nodeData'),
     newDataKey: Symbol('newDataKey'),
     schemaKey: Symbol('schemaData'),
-    mainNode: '$main',
+    mainNode: 'main_node',
     relationshipsKey: Symbol('addRelationships'),
     schemaValidation: Symbol('schemaValidation'),
     duplicateRelNamesValidation: Symbol('duplicateRelNamesValidation'),

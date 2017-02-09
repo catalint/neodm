@@ -1,12 +1,12 @@
 {
   "name": "neodm",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -m 100000 -t 50 -L -v",
-    "test-cov": "node node_modules/lab/bin/lab  -m 100000 -t 50 -r lcov",
-    "report-cov": "node node_modules/lab/bin/lab  -m 100000 -t 50 -r lcov | ./node_modules/coveralls/bin/coveralls.js"
+    "test": "node node_modules/lab/bin/lab -I __core-js_shared__ -m 100000 -t 50 -L -v",
+    "test-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov",
+    "report-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov | ./node_modules/coveralls/bin/coveralls.js"
   },
   "repository": {
     "type": "git",
@@ -33,13 +33,13 @@
     "hoek": "^4.0.0",
     "joi": "^10.0.0",
     "neo4j": "^2.0.0-RC2",
-    "neo4j-driver": "^1.0.0",
+    "neo4j-driver": "^1.1.0",
     "neodb": "^1.2.4",
     "shortid": "^2.2.6"
   },
   "devDependencies": {
     "code": "^4.0.0",
     "coveralls": "^2.11.9",
-    "lab": "^12.0.0"
+    "lab": "^12.1.0"
   }
 }

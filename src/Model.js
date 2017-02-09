@@ -16,6 +16,7 @@ const relationshipsKey = require('./constants').relationshipsKey;
 const schemaValidation = require('./constants').schemaValidation;
 const duplicateRelNamesValidation = require('./constants').duplicateRelNamesValidation;
 const NEO_ID = require('./constants').NEO_ID;
+const mainNodeKey = require('./constants').mainNode;
 
 class Model {
 
@@ -235,14 +236,14 @@ class Model {
             const nextId = ModelHelper.getID(model);
 
             if (currentId !== nextId || nextId === undefined) {
-                this[relationshipsKey].push({ action: 'delete', rel: rel });
-                this[relationshipsKey].push({ action: 'add', rel: rel, to: model });
+                this[relationshipsKey].push({ action: 'delete', rel });
+                this[relationshipsKey].push({ action: 'add', rel, to: model });
             }
             this[nodeKey].relationships[key] = model;
         }
         else if (rel instanceof HasManyRelationship) {
 
-            this[relationshipsKey].push({ action: 'delete', rel: rel });
+            this[relationshipsKey].push({ action: 'delete', rel });
             this[nodeKey].relationships[key] = [];
 
             if (!Array.isArray(model)) {
@@ -251,7 +252,7 @@ class Model {
 
             model.forEach((m) => {
 
-                this[relationshipsKey].push({ action: 'add', rel: rel, to: m });
+                this[relationshipsKey].push({ action: 'add', rel, to: m });
                 this[nodeKey].relationships[key].push(m);
             });
         }
@@ -278,12 +279,12 @@ class Model {
             if (Array.isArray(model)) {
                 model.forEach((m) => {
 
-                    this[relationshipsKey].push({ action: 'add', rel: rel, to: m });
+                    this[relationshipsKey].push({ action: 'add', rel, to: m });
                     this[nodeKey].relationships[key].push(m);
                 });
             }
             else {
-                this[relationshipsKey].push({ action: 'add', rel: rel, to: model });
+                this[relationshipsKey].push({ action: 'add', rel, to: model });
                 this[nodeKey].relationships[key].push(model);
             }
         }
@@ -442,7 +443,7 @@ class Model {
 
             const relNames = relationshipKeys.map((key) => {
 
-                return { relName: schema[key].relName, key: key };
+                return { relName: schema[key].relName, key };
             });
 
             duplicateRelNames = [];
@@ -545,7 +546,7 @@ class Model {
             else {
                 cypherNode = {
                     query: `MATCH (node:${self.getModelName()}) WHERE id(node)={id} SET node+={props} return node`,
-                    params: { id: id, props: setProperties }
+                    params: { id, props: setProperties }
                 };
             }
             if (Object.getOwnPropertyNames(setProperties).length > 0 || id === undefined) {
@@ -792,7 +793,7 @@ class Model {
             });
         }
         else if (typeof query === 'string') {
-            result = this.find({ query: query, identifier: '$main', singleList: true });
+            result = this.find({ query, identifier: mainNodeKey, singleList: true });
         }
         else if (query.query !== undefined) {
             const queryOptions = { query: query.query, params: query.params, single: query.single, list: query.list };
@@ -828,7 +829,7 @@ class Model {
                 single: true,
                 list: query.list || !!arrayProps.length
             };
-            queryOptions.schema = { ['node']: this };
+            queryOptions.schema = { node: this };
             result = ModelHelper.runQuery(queryOptions);
         }
 
