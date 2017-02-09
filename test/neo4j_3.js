@@ -18,7 +18,7 @@ const expect = Code.expect;
 const NeoDM = require('../src');
 const Model = NeoDM.Model;
 
-const db = new NeoDB(6363, '3.0.0', 6364);
+const db = new NeoDB(6363, '3.1.1', 6364);
 
 describe('bolt driver', () => {
 
