@@ -76,14 +76,15 @@ const queryDB = (query) => {
 module.exports = {
     query: queryDB,
     toInt,
+    Neo4jDriver,
     setLogger(loggerFunction){
 
         logger = loggerFunction;
     },
-    setDB(url){
+    setDB(url, auth){
 
         if (url.indexOf('bolt') !== -1) {
-            const driver = Neo4jDriver.driver(url);
+            const driver = Neo4jDriver.driver(url, auth);
             db = driver.session();
             isBolt = true;
         }
