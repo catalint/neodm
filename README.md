@@ -4,6 +4,8 @@
 Neo4j Graph Data Model
 ===
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/catalint/neodm.svg)](https://greenkeeper.io/)
+
 Also works with new bolt driver
 
 Changes
