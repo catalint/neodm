@@ -18,7 +18,7 @@ const NeoDM = require('../src');
 const Model = NeoDM.Model;
 const NEO_ID = require('../src/constants').NEO_ID;
 
-const db = new NeoDB(6363);
+const db = new NeoDB(6363, '2.3.3');
 
 describe('http rest driver', () => {
 
