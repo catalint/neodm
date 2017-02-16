@@ -11,6 +11,7 @@ const Relationship = require('./Relationship').Relationship;
 const HasManyRelationship = require('./Relationship').HasManyRelationship;
 const HasOneRelationship = require('./Relationship').HasOneRelationship;
 const ShortID = require('shortid');
+const _ = require('lodash');
 
 const relationshipsKey = require('./constants').relationshipsKey;
 const schemaValidation = require('./constants').schemaValidation;
@@ -138,9 +139,13 @@ class Model {
 
             return !(schema[key] instanceof Relationship);
         });
-        const relationshipKeys = Object.getOwnPropertyNames(schema).filter((key) => {
+        const hasOneRelationshipKeys = Object.getOwnPropertyNames(schema).filter((key) => {
 
-            return (schema[key] instanceof Relationship);
+            return (schema[key] instanceof HasOneRelationship);
+        });
+        const hasManyRelationshipKeys = Object.getOwnPropertyNames(schema).filter((key) => {
+
+            return (schema[key] instanceof HasManyRelationship);
         });
 
         if (data !== null && typeof data === 'object') {
@@ -150,15 +155,58 @@ class Model {
                 }
             }
 
-            for (const key of relationshipKeys) {
+            for (const key of hasOneRelationshipKeys) {
                 if (data.hasOwnProperty(key)) {
                     this.setRelationship(key, data[key]);
+                }
+            }
+
+            for (const key of hasManyRelationshipKeys) {
+                if (data.hasOwnProperty(key)) {
+                    this._setHasManyRelProps(data[key], key, schema[key].to);
                 }
             }
         }
         else {
             throw new Error('Expected an object');
         }
+    }
+
+
+    _setHasManyRelProps(data, key, model) {
+
+
+        data = data || []
+        // console.log(arguments);
+        const self = this;
+
+        return Co(function*() {
+
+            if (self.id) {
+                yield self.inflate(key);
+                const oldIds = self[key].map((item) => item.id);
+                const newIds = data.filter((item) => item.id).map((item) => item.id);
+
+                const deleteIds = _.difference(oldIds, newIds);
+                deleteIds.forEach((id) => self.deleteRelationship(key, id));
+            }
+
+            const items = [];
+            for (let item of data) {
+
+                if (!(item instanceof Model)) {
+                    item = new model(item);
+                }
+
+                items.push(item);
+            }
+            if (items.length) {
+                //console.log('items',JSON.stringify(items))
+                self.setRelationship(key, items);
+            }
+
+            return self[key];
+        });
     }
 
     static validator() {
@@ -402,7 +450,6 @@ class Model {
 
             const res = self.getModel().validator().validate(self, { abortEarly: false });
             if (res.error) {
-                console.error(res);
                 reject(res.error);
             }
             else {

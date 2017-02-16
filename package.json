@@ -4,7 +4,7 @@
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -I __core-js_shared__ -m 100000 -t 50 -L -v",
+    "test": "node node_modules/lab/bin/lab -I __core-js_shared__ -m 100000 -t 50 -L -v -g ttt",
     "test-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov",
     "report-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov | ./node_modules/coveralls/bin/coveralls.js"
   },
@@ -32,6 +32,7 @@
     "co": "^4.6.0",
     "hoek": "^4.0.0",
     "joi": "^10.0.0",
+    "lodash": "^4.17.4",
     "neo4j": "^2.0.0-RC2",
     "neo4j-driver": "^1.1.0",
     "shortid": "^2.2.6"
