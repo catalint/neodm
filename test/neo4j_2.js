@@ -18,7 +18,7 @@ const NeoDM = require('../src');
 const Model = NeoDM.Model;
 const NEO_ID = require('../src/constants').NEO_ID;
 
-const db = new NeoDB(6363, '2.3.3');
+const db = new NeoDB(6362, '2.3.3');
 
 describe('http rest driver', () => {
 
@@ -529,9 +529,9 @@ describe('http rest driver', () => {
     });
 
 
-    it('should update relationship hasMany ttt', () => {
+    it('should update relationship hasMany', (done) => {
 
-        return Co(function *() {
+        Co(function *() {
 
             class User extends Model {
                 static [Model.schema]() {
@@ -573,7 +573,7 @@ describe('http rest driver', () => {
 
 
             const article = new Article({ title: 'hello world', authors: [john, smith] });
-            //article.setRelationship('comments', [new Comment({ text: 'c1' }), new Comment({ text: 'c2' }), new Comment({ text: 'c3' })]);
+            article.setRelationship('comments', [new Comment({ text: 'c1' }), new Comment({ text: 'c2' }), new Comment({ text: 'c3' })]);
             yield article.save();
 
 
@@ -582,11 +582,10 @@ describe('http rest driver', () => {
 
             expect(article.authors).to.have.length(2);
 
-            //article.setRelationship('authors', [john, smith]);
-            //yield article.save();
+            article.setRelationship('authors', [john, smith]);
+            yield article.save();
 
 
-            // console.log(JSON.stringify(article.authors))
             expect(article.authors).to.be.an.array();
             expect(article.authors).to.have.length(2);
 
@@ -594,11 +593,11 @@ describe('http rest driver', () => {
             const articleFromDB = yield Article.find(article.id);
             yield articleFromDB.inflate();
 
-            console.log(articleFromDB.authors.length, JSON.stringify(articleFromDB.authors));
             expect(articleFromDB.authors).to.be.an.array();
             expect(articleFromDB.authors).to.have.length(2);
 
-        })
+            done();
+        }).catch((err) => done(err));
     });
 
     it('save model with empty hasMany relationship', (done) => {

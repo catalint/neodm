@@ -176,7 +176,7 @@ class Model {
     _setHasManyRelProps(data, key, model) {
 
 
-        data = data || []
+        data = data || [];
         // console.log(arguments);
         const self = this;
 

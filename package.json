@@ -1,10 +1,10 @@
 {
   "name": "neodm",
-  "version": "3.0.5",
+  "version": "3.1.5",
   "description": "Neo4j Graph Data Model",
   "main": "src/index.js",
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -I __core-js_shared__ -m 100000 -t 50 -L -v -g ttt",
+    "test": "node node_modules/lab/bin/lab -I __core-js_shared__ -m 100000 -t 50 -L -v",
     "test-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov",
     "report-cov": "node node_modules/lab/bin/lab -I __core-js_shared__  -m 100000 -t 50 -r lcov | ./node_modules/coveralls/bin/coveralls.js"
   },

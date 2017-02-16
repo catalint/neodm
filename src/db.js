@@ -19,7 +19,7 @@ const toInt = (number) => {
 };
 
 const queryDB = (query) => {
-    console.log(query)
+    //console.log(query)
 
     logger(query);
     if (db === undefined) {
