@@ -10,7 +10,11 @@ Also works with new bolt driver
 
 Changes
 ===
-breaking: v3 no longer relies on neo4j id's and sets own `id` property if not set in model declaration
+
+3.2.0 : allow setRelationship & set to be used with simple object and not just Model instance or id
+
+**breaking:** v3 no longer relies on neo4j id's and sets own `id` property if not set in model declaration
+
 
 Usage
 ===

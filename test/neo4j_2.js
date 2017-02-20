@@ -529,6 +529,71 @@ describe('http rest driver', () => {
     });
 
 
+    it('should save hasOne rel object', (done) => {
+
+        Co(function *() {
+
+            class User extends Model {
+                static [Model.schema]() {
+
+                    return {
+                        username: Joi.string()
+                    };
+                }
+
+            }
+            class Comment extends Model {
+                static [Model.schema]() {
+
+                    return {
+                        text: Joi.string()
+                    };
+                }
+
+            }
+
+            class Article extends Model {
+                static [Model.schema]() {
+
+                    return {
+                        title: Joi.string().default('test'),
+                        authors: Model.hasMany(User),
+                        comment: Model.hasOne(Comment)
+                    };
+                }
+            }
+
+
+            const article = new Article({
+                title: 'hello world',
+                comment: { text: 'test' },
+                authors: [{ username: 'jjj' }, { username: 'kkk' }]
+            });
+            yield article.save();
+
+
+            expect(article.title).to.be.equal('hello world');
+            expect(article.authors).to.be.an.array();
+
+            expect(article.authors).to.have.length(2);
+            expect(article.comment).to.be.an.object();
+
+            expect(article.comment.text).to.be.equal('test');
+
+
+            const articleFromDB = yield Article.find(article.id);
+            yield articleFromDB.inflate();
+
+            expect(articleFromDB.authors).to.be.an.array();
+            expect(articleFromDB.authors).to.have.length(2);
+
+            expect(articleFromDB.comment).to.be.an.object();
+            expect(articleFromDB.comment.text).to.be.equal('test');
+
+            done();
+        }).catch((err) => done(err));
+    });
+
     it('should update relationship hasMany', (done) => {
 
         Co(function *() {
