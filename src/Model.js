@@ -262,18 +262,20 @@ class Model {
 
         const schema = this.getSchema();
         const rel = schema[key];
+        const modelClass = rel.to;
         if (!(rel instanceof Relationship)) {
             throw new Error(`Expected a relationship for ${key}`);
         }
         if (!Array.isArray(model)) {
             if (!(model instanceof Model) && ModelHelper.getID(model) === undefined) {
-                throw new Error(`Expected instance of Model, id or {id:Number}, got ${require('util').inspect(model)}`);
+                model = new modelClass(model);
             }
         }
         else {
-            for (const m of model) {
+            for (const mIndex in model) {
+                const m = model[mIndex];
                 if (!(m instanceof Model) && ModelHelper.getID(m) === undefined) {
-                    throw new Error(`Expected instance of Model, id or {id:Number}, got ${require('util').inspect(m)}`);
+                    model[mIndex] = new modelClass(m);
                 }
             }
         }
