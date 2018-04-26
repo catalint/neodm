@@ -5,6 +5,7 @@ sudo: required
 node_js:
   - 6
   - 7
+  - 10
 
 after_success:
 - npm run report-cov
