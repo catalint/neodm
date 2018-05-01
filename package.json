@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "code": "^4.0.0",
-    "coveralls": "^2.11.9",
+    "coveralls": "^3.0.1",
     "lab": "^13.0.1",
     "neodb": "^2.0.4"
   }
