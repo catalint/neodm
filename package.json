@@ -31,7 +31,7 @@
   "dependencies": {
     "co": "^4.6.0",
     "hoek": "^4.0.0",
-    "joi": "^10.0.0",
+    "joi": "^13.2.0",
     "lodash": "^4.17.4",
     "neo4j": "^2.0.0-RC2",
     "neo4j-driver": "^1.1.0",
@@ -40,7 +40,7 @@
   "devDependencies": {
     "code": "^4.0.0",
     "coveralls": "^3.0.1",
-    "lab": "^13.0.1",
+    "lab": "^14.3.1",
     "neodb": "^2.0.4"
   }
 }
