@@ -38,7 +38,7 @@
     "shortid": "^2.2.6"
   },
   "devDependencies": {
-    "coveralls": "^2.11.9",
+    "coveralls": "^3.0.8",
     "code": "^5.2.0",
     "lab": "^15.4.1",
     "neodb": "^3.0.0"
